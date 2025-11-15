@@ -2246,8 +2246,8 @@ public String fetchDataForApplication(String inputNumber, String type) {
     try {
         System.out.println("📱 fetchDataForApplication called: " + inputNumber + ", " + type);
         
-        ApplicationHelper applicationHelper = new ApplicationHelper(this);
-        Map<String, Object> result = applicationHelper.fetchDataForApplicationForm(inputNumber, type);
+        ApplicationFormHelper applicationFormHelper = new ApplicationFormHelper(this);
+        Map<String, Object> result = applicationFormHelper.fetchDataForApplicationForm(inputNumber, type);
         
         // Convert to JSON string for HTML
         JSONObject jsonResult = new JSONObject(result);
