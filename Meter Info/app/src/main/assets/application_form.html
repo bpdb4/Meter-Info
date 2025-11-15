@@ -84,6 +84,11 @@
             font-family: 'Noto Sans Bengali', sans-serif;
             font-weight: bold;
             font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .search-btn:hover {
+            background: #218838;
         }
 
         .search-btn:disabled {
@@ -126,10 +131,11 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
+            border: 1px solid #333;
         }
 
         .form-table td {
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #333;
             vertical-align: top;
         }
@@ -142,6 +148,7 @@
 
         .form-value {
             width: 70%;
+            min-height: 20px;
         }
 
         .action-buttons {
@@ -160,6 +167,7 @@
             font-family: 'Noto Sans Bengali', sans-serif;
             font-weight: bold;
             font-size: 16px;
+            transition: background 0.3s;
         }
 
         .btn-print {
@@ -167,14 +175,26 @@
             color: white;
         }
 
+        .btn-print:hover {
+            background: #0056b3;
+        }
+
         .btn-close {
             background: #dc3545;
             color: white;
         }
 
+        .btn-close:hover {
+            background: #c82333;
+        }
+
         .btn-back {
             background: #6c757d;
             color: white;
+        }
+
+        .btn-back:hover {
+            background: #545b62;
         }
     </style>
 </head>
@@ -334,7 +354,9 @@
         
         // Focus on input
         setTimeout(() => {
-            document.getElementById('searchInput').focus();
+            const input = document.getElementById('searchInput');
+            input.focus();
+            input.value = '';
         }, 100);
     }
 
@@ -386,12 +408,14 @@
         document.getElementById('formSection').style.display = 'block';
     }
 
-    // Auto-focus on input
+    // Auto-focus on input when page loads
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(function() {
-            var input = document.getElementById('searchInput');
+            const input = document.getElementById('searchInput');
             if (input) {
                 input.focus();
+                // Force keyboard to show
+                input.click();
             }
         }, 500);
     });
@@ -403,9 +427,18 @@
         }
     });
 
+    // Force focus on input when user taps anywhere
+    document.addEventListener('click', function() {
+        const input = document.getElementById('searchInput');
+        if (input && document.getElementById('searchSection').style.display !== 'none') {
+            input.focus();
+        }
+    });
+
     // Global functions for Android interface
     window.hideLoading = hideLoading;
     window.showError = showError;
+    window.fillFormWithData = fillFormWithData;
 </script>
 </body>
 </html>
