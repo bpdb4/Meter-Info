@@ -108,7 +108,6 @@ public class MainActivity extends AppCompatActivity {
         prepaidBtn = findViewById(R.id.prepaidBtn);
         postpaidBtn = findViewById(R.id.postpaidBtn);
         submitBtn = findViewById(R.id.submitBtn);
-findViewById=(R.id.backBtn);
         resultView = findViewById(R.id.resultView);
         //excelBtn = findViewById(R.id.excelBtn);
 
@@ -117,6 +116,8 @@ findViewById=(R.id.backBtn);
         postpaidRadioGroup = findViewById(R.id.postpaidRadioGroup);
         consumerNoOption = findViewById(R.id.consumerNoOption);
         meterNoOption = findViewById(R.id.meterNoOption);
+
+        Button backBtn = findViewById(R.id.backBtn);
 
         resultView.setKeyListener(null);  // This completely disables keyboard
         resultView.setTextIsSelectable(true);
@@ -188,7 +189,14 @@ findViewById=(R.id.backBtn);
                 Toast.makeText(this, "Please grant storage permission first", Toast.LENGTH_LONG).show();
                 checkStoragePermission();
             }
-        }
+         // ✅ CORRECT PLACE: Add back button listener HERE
+    findViewById(R.id.backBtn).setOnClickListener(v -> {
+        Intent intent = new Intent(MainActivity.this, Home.class);
+        startActivity(intent);
+        finish();
+    });
+}
+        
 
 
     private void updateButtonStates() {
