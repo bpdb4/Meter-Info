@@ -1,39 +1,56 @@
-name: Android APK Build
+name: Android CI
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          accept-android-sdk-licenses: true
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
 
-      - name: Fix Gradle permission
-        run: chmod +x gradlew
+    - name: Make gradlew executable
+      run: chmod +x "./Meter Info/gradlew"
 
-      - name: Build Release APK
-        run: ./gradlew assembleRelease --stacktrace
+    - name: Build Debug APK
+      working-directory: "./Meter Info"
+      run: |
+        ./gradlew assembleDebug
+        ls -la app/build/outputs/apk/debug/
 
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: MeterInfo-Release
-          path: app/build/outputs/apk/release/*.apk
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-debug
+        path: "Meter Info/app/build/outputs/apk/debug/*.apk"
+        retention-days: 7
+
+    - name: Build Release APK
+      working-directory: "./Meter Info"
+      run: |
+        ./gradlew assembleRelease
+        ls -la app/build/outputs/apk/release/
+
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-release
+        path: "Meter Info/app/build/outputs/apk/release/*.apk"
+        retention-days: 7
+
+    - name: List all files (for debugging)
+      run: find . -name "*.apk" -type f
