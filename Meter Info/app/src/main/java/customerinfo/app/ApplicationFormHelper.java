@@ -7,12 +7,11 @@ import java.util.*;
 
 public class ApplicationFormHelper {
     
-    private MainActivity mainActivity;
-    
-    public ApplicationFormHelper(MainActivity mainActivity) {
-        this.mainActivity = mainActivity;
+    // FIXED: Added empty constructor with curly braces
+    public ApplicationFormHelper() {
+        // Empty constructor
     }
-    
+     
     /**
      * Main method to fetch data for application form
      * Returns data in EXACT format expected by HTML
