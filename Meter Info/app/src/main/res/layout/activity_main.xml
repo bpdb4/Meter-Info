@@ -1,199 +1,242 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="#f8f9fa">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <!-- Meter Input -->
-    <EditText
-        android:id="@+id/meterInput"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Enter meter number"
-        android:inputType="number"
-        android:maxLines="1"
-        android:layout_marginBottom="16dp"
-        android:minHeight="48dp"
-        android:padding="12dp"
-        android:background="#ffffff"
-        android:textSize="16sp" />
-
-    <!-- RadioButton Group: Prepaid/Postpaid -->
-    <RadioGroup
-        android:id="@+id/mainRadioGroup"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
-
-        <RadioButton
-            android:id="@+id/prepaidBtn"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_weight="1"
-            android:background="@drawable/radio_background"
-            android:button="@null"
-            android:gravity="center"
-            android:padding="12dp"
-            android:text="🔋 Prepaid"
-            android:textColor="#212121"
-            android:textSize="14sp"
-            tools:ignore="TouchTargetSizeCheck" />
-
-        <RadioButton
-            android:id="@+id/postpaidBtn"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:background="@drawable/radio_background_inactive"
-            android:button="@null"
-            android:gravity="center"
-            android:padding="12dp"
-            android:text="💡 Postpaid"
-            android:textColor="#ffffff"
-            android:textSize="14sp"
-            tools:ignore="TouchTargetSizeCheck" />
-    </RadioGroup>
-
-    <!-- Postpaid Sub-options (Initially Hidden) -->
     <LinearLayout
-        android:id="@+id/postpaidOptionsLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:gravity="center"
         android:orientation="vertical"
-        android:visibility="gone"
-        android:layout_marginBottom="16dp"
-        android:background="#e3f2fd"
-        android:padding="12dp">
+        android:id="@+id/startupLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
         <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Select Input Type:"
-            android:textSize="16sp"
+            android:textSize="24sp"
             android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-
-        <RadioGroup
-            android:id="@+id/postpaidRadioGroup"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <RadioButton
-                android:id="@+id/consumerNoOption"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@drawable/sub_radio_background"
-                android:button="@null"
-                android:gravity="center"
-                android:padding="10dp"
-                android:text="👤 Consumer No"
-                android:textColor="#ffffff"
-                android:textSize="13sp"
-                android:checked="true" />
-
-            <RadioButton
-                android:id="@+id/meterNoOption"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@drawable/sub_radio_background_inactive"
-                android:button="@null"
-                android:gravity="center"
-                android:padding="10dp"
-                android:text="🔢 Meter No"
-                android:textColor="#ffffff"
-                android:textSize="13sp" />
-        </RadioGroup>
-    </LinearLayout>
-
-    <!-- Submit Button Section - MODIFIED -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_horizontal"
-        android:layout_marginBottom="20dp">
+            android:layout_marginBottom="50dp"
+            android:text="বিদ্যুৎ বিল তথ্য" />
 
         <Button
-            android:id="@+id/submitBtn"
-            android:layout_width="245dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_weight="1"
-            android:background="#27ae60"
-            android:padding="14dp"
-            android:text="🚀 Submit"
-            android:textColor="#263238"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:id="@+id/lookupBtn"
+            android:layout_width="200dp"
+            android:layout_height="60dp"
+            android:layout_marginBottom="20dp"
+            android:text="তথ্য খুঁজুন" />
+
+        <Button
+            android:textSize="16sp"
+            android:id="@+id/applicationBtn"
+            android:layout_width="200dp"
+            android:layout_height="60dp"
+            android:text="আবেদনপত্র" />
 
     </LinearLayout>
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="📋 Consumer Info:"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp" />
 
-    <!-- ScrollView for Results -->
-    <ScrollView
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/mainLayout"
+        android:visibility="gone"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="#ffffff"
-        android:contentDescription="Customer information and bill history data"
-        android:padding="12dp"
-        android:scrollbars="vertical">
+        android:layout_height="match_parent">
 
-        <HorizontalScrollView
+        <Button
+            android:id="@+id/backBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:text="← ফিরে যান" />
+
+        <EditText
+            android:textSize="16sp"
+            android:id="@+id/meterInput"
+            android:background="#ffffff"
+            android:padding="12dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fillViewport="true"
-            android:scrollbars="horizontal">
+            android:layout_marginBottom="16dp"
+            android:minHeight="48dp"
+            android:hint="Enter meter number"
+            android:maxLines="1"
+            android:inputType="number" />
 
-            <LinearLayout
-                android:layout_width="wrap_content"
+        <RadioGroup
+            android:orientation="horizontal"
+            android:id="@+id/mainRadioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <RadioButton
+                android:textSize="14sp"
+                android:textColor="#212121"
+                android:gravity="center"
+                android:id="@+id/prepaidBtn"
+                android:background="@drawable/radio_background"
+                android:padding="12dp"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:button="@null"
+                android:text="Prepaid"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp" />
 
-                <EditText
-                    android:id="@+id/resultView"
-                    android:layout_width="match_parent"
+            <RadioButton
+                android:textSize="14sp"
+                android:textColor="#ffffff"
+                android:gravity="center"
+                android:id="@+id/postpaidBtn"
+                android:background="@drawable/radio_background_inactive"
+                android:padding="12dp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:button="@null"
+                android:text="Postpaid"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp" />
+
+        </RadioGroup>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:id="@+id/postpaidOptionsLayout"
+            android:background="#e3f2fd"
+            android:padding="12dp"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="Select Input Type:" />
+
+            <RadioGroup
+                android:orientation="horizontal"
+                android:id="@+id/postpaidRadioGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:textSize="13sp"
+                    android:textColor="#ffffff"
+                    android:gravity="center"
+                    android:id="@+id/consumerNoOption"
+                    android:background="@drawable/sub_radio_background"
+                    android:padding="10dp"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:background="@android:color/transparent"
-                    android:cursorVisible="false"
-                    android:focusableInTouchMode="true"
-                    android:inputType="none"
-                    android:longClickable="true"
-                    android:padding="8dp"
-                    android:scrollbars="vertical"
-                    android:selectAllOnFocus="false"
-                    android:text="👆 Select bill type, enter meter/Consumer Number and tap Submit"
-                    android:textColor="#2c3e50"
-                    android:textColorHighlight="#80D1E0F7"
-                    android:textIsSelectable="true"
-                    android:textSize="14sp" />
+                    android:checked="true"
+                    android:button="@null"
+                    android:text="Consumer No"
+                    android:layout_weight="1" />
 
-                <!-- Container for dynamic table content -->
+                <RadioButton
+                    android:textSize="13sp"
+                    android:textColor="#ffffff"
+                    android:gravity="center"
+                    android:id="@+id/meterNoOption"
+                    android:background="@drawable/sub_radio_background_inactive"
+                    android:padding="10dp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:button="@null"
+                    android:text="Meter No"
+                    android:layout_weight="1" />
+
+            </RadioGroup>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:gravity="center_horizontal"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp">
+
+            <Button
+                android:textSize="16sp"
+                android:textColor="#263238"
+                android:id="@+id/submitBtn"
+                android:background="#27ae60"
+                android:padding="14dp"
+                android:layout_width="245dp"
+                android:layout_height="wrap_content"
+                android:text="Submit"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp" />
+
+        </LinearLayout>
+
+        <TextView
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="Consumer Info:" />
+
+        <ScrollView
+            android:background="#ffffff"
+            android:padding="12dp"
+            android:scrollbars="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:contentDescription="Customer information and bill history data">
+
+            <HorizontalScrollView
+                android:scrollbars="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fillViewport="true">
+
                 <LinearLayout
-                    android:id="@+id/tableContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" />
-                <!-- ADD THIS NEW EXCEL BUTTON -->
+                    android:orientation="vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
 
-            </LinearLayout>
+                    <EditText
+                        android:textSize="14sp"
+                        android:textColor="#2c3e50"
+                        android:textColorHighlight="#80d1e0f7"
+                        android:id="@+id/resultView"
+                        android:background="@android:color/transparent"
+                        android:padding="8dp"
+                        android:focusableInTouchMode="true"
+                        android:scrollbars="vertical"
+                        android:longClickable="true"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Select bill type, enter meter/Consumer Number and tap Submit"
+                        android:cursorVisible="false"
+                        android:selectAllOnFocus="false"
+                        android:inputType="none"
+                        android:textIsSelectable="true" />
 
-        </HorizontalScrollView>
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:id="@+id/tableContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
 
-    </ScrollView>
+                </LinearLayout>
+
+            </HorizontalScrollView>
+
+        </ScrollView>
+
+    </LinearLayout>
 
 </LinearLayout>
