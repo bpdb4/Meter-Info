@@ -41,6 +41,7 @@ import android.webkit.WebView;
 import android.webkit.WebSettings;
 import android.webkit.WebViewClient;
 import androidx.appcompat.app.AlertDialog;
+import android.view.inputmethod.InputMethodManager;
 public class MainActivity extends AppCompatActivity {
 
     private EditText meterInput;
