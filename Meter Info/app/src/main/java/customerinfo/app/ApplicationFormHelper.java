@@ -34,20 +34,35 @@ public class ApplicationFormHelper {
         }
     }
 
-    public void fillApplicationForm(Map<String, Object> result, String billType) {
+ // In ApplicationFormHelper.java
+public void fillApplicationForm(Map<String, Object> result, String billType) {
+    activity.runOnUiThread(() -> {
         try {
-            this.webView.post(new Runnable() {
-                @Override
-                public void run() {
-                    String javascriptCode = generateApplicationJavascript(result, billType);
-                    webView.evaluateJavascript(javascriptCode, null);
-                }
-            });
+            // Convert your result to proper JSON format
+            JSONObject jsonData = new JSONObject();
+            
+            // Add customer_info
+            JSONObject customerInfo = new JSONObject();
+            // Populate with your actual data from result
+            customerInfo.put("মিটার নং", result.get("meter_number"));
+            customerInfo.put("গ্রাহক নং", result.get("consumer_number"));
+            // ... add other fields
+            jsonData.put("customer_info", customerInfo);
+            
+            // Add balance_info
+            JSONObject balanceInfo = new JSONObject();
+            // Populate with balance data
+            jsonData.put("balance_info", balanceInfo);
+            
+            String jsonString = jsonData.toString();
+            webView.evaluateJavascript("javascript:fillFormWithData(" + jsonString + ");", null);
+            
         } catch (Exception e) {
-            e.printStackTrace();
-            showError("Error filling form: " + e.getMessage());
+            Log.e("ApplicationForm", "Error filling form: " + e.getMessage());
+            webView.evaluateJavascript("javascript:showError('Data processing error: " + e.getMessage() + "');", null);
         }
-    }
+    });
+}
 
     private String generateApplicationJavascript(Map<String, Object> result, String billType) {
         StringBuilder js = new StringBuilder();
