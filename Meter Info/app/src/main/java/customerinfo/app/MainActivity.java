@@ -285,10 +285,12 @@ public class MainActivity extends AppCompatActivity {
                 showTableForCustomer(result);
                 return;
             }
-            for (Map<String, Object> customerResult : (List) result.get("customer_results")) {
+            List<Map<String, Object>> customerResults = (List<Map<String, Object>>) result.get("customer_results");
+            for (Map<String, Object> customerResult : customerResults) {
                 showTableForCustomer(customerResult);
             }
         } catch (Exception e) {
+            // Ignore errors
         }
     }
 
@@ -305,6 +307,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         } catch (Exception e) {
+            // Ignore errors
         }
     }
 
@@ -313,44 +316,36 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public static Map<String, Object> getCustomerNumbersByMeter(String meterNumber) {
-        String str = meterNumber;
         Map<String, Object> result = new HashMap<>();
         try {
-            HttpsURLConnection conn = (HttpsURLConnection) new URL("https://billonwebapi.bpdb.gov.bd/api/BillInformation/GetCustomerMeterbyMeterNo/12/" + str).openConnection();
+            HttpsURLConnection conn = (HttpsURLConnection) new URL("https://billonwebapi.bpdb.gov.bd/api/BillInformation/GetCustomerMeterbyMeterNo/12/" + meterNumber).openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-            conn.setRequestProperty(XIncludeHandler.HTTP_ACCEPT, "application/json");
+            conn.setRequestProperty("Accept", "application/json");
             conn.setConnectTimeout(10000);
             conn.setReadTimeout(15000);
-            System.out.println("🔍 METER LOOKUP API: Fetching customers for meter: " + str);
+            System.out.println("🔍 METER LOOKUP API: Fetching customers for meter: " + meterNumber);
             if (conn.getResponseCode() == 200) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 StringBuilder response = new StringBuilder();
-                while (true) {
-                    String readLine = reader.readLine();
-                    String line = readLine;
-                    if (readLine == null) {
-                        break;
-                    }
+                String line;
+                while ((line = reader.readLine()) != null) {
                     response.append(line);
                 }
                 JSONObject meterData = new JSONObject(response.toString());
-                if (meterData.getInt(NotificationCompat.CATEGORY_STATUS) != 1 || !meterData.has("content")) {
+                if (meterData.getInt("status") != 1 || !meterData.has("content")) {
                     result.put("error", "No customer data found for this meter");
                 } else {
-                    JSONArray customers2 = meterData.getJSONArray("content");
+                    JSONArray customers = meterData.getJSONArray("content");
                     List<String> customerNumbers = new ArrayList<>();
-                    System.out.println("✅ Found " + customers2.length() + " customer(s) for meter " + str);
-                    int i = 0;
-                    while (i < customers2.length()) {
-                        JSONObject customer = customers2.getJSONObject(i);
+                    System.out.println("✅ Found " + customers.length() + " customer(s) for meter " + meterNumber);
+                    for (int i = 0; i < customers.length(); i++) {
+                        JSONObject customer = customers.getJSONObject(i);
                         String custNum = customer.optString("CUSTOMER_NUM");
                         if (!custNum.isEmpty()) {
                             customerNumbers.add(custNum);
                             System.out.println("   👤 Customer: " + custNum + " - " + customer.optString("CUSTOMER_NAME", "N/A"));
                         }
-                        i++;
-                        String str2 = meterNumber;
                     }
                     if (!customerNumbers.isEmpty()) {
                         result.put("customer_numbers", customerNumbers);
@@ -372,8 +367,8 @@ public class MainActivity extends AppCompatActivity {
     private Map<String, Object> fetchMeterLookupData(String meterNumber) {
         Map<String, Object> result = new HashMap<>();
         result.put("meter_number", meterNumber);
-        result.put("customer_numbers", new ArrayList());
-        result.put("customer_results", new ArrayList());
+        result.put("customer_numbers", new ArrayList<String>());
+        result.put("customer_results", new ArrayList<Map<String, Object>>());
         System.out.println("🔍 Starting meter lookup for: " + meterNumber);
         Map<String, Object> meterResult = getCustomerNumbersByMeter(meterNumber);
         if (meterResult.containsKey("error")) {
@@ -383,7 +378,7 @@ public class MainActivity extends AppCompatActivity {
             result.put("error", "No customer numbers found for this meter");
             return result;
         } else {
-            List<String> customerNumbers = (List) meterResult.get("customer_numbers");
+            List<String> customerNumbers = (List<String>) meterResult.get("customer_numbers");
             result.put("customer_numbers", customerNumbers);
             result.put("meter_api_data", meterResult.get("meter_api_data"));
             System.out.println("🔄 Processing " + customerNumbers.size() + " customer(s)");
@@ -403,7 +398,7 @@ public class MainActivity extends AppCompatActivity {
             HttpURLConnection conn = (HttpURLConnection) new URL("http://web.bpdbprepaid.gov.bd/bn/token-check").openConnection();
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
-            conn.setRequestProperty(XIncludeHandler.HTTP_ACCEPT, "text/x-component");
+            conn.setRequestProperty("Accept", "text/x-component");
             conn.setRequestProperty("Content-Type", "text/plain;charset=UTF-8");
             conn.setRequestProperty("Next-Action", "29e85b2c55c9142822fe8da82a577612d9e58bb2");
             conn.setRequestProperty("Origin", "http://web.bpdbprepaid.gov.bd");
@@ -416,12 +411,8 @@ public class MainActivity extends AppCompatActivity {
             if (responseCode == 200) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 StringBuilder response = new StringBuilder();
-                while (true) {
-                    String readLine = reader.readLine();
-                    String line = readLine;
-                    if (readLine == null) {
-                        break;
-                    }
+                String line;
+                while ((line = reader.readLine()) != null) {
                     response.append(line);
                 }
                 String responseBody = response.toString();
@@ -464,19 +455,15 @@ public class MainActivity extends AppCompatActivity {
             HttpsURLConnection conn = (HttpsURLConnection) new URL("https://miscbillAPI.bpdb.gov.bd/API/v1/get-pre-customer_info/" + customerNumber).openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-            conn.setRequestProperty(XIncludeHandler.HTTP_ACCEPT, "application/json");
+            conn.setRequestProperty("Accept", "application/json");
             conn.setConnectTimeout(10000);
             conn.setReadTimeout(15000);
             System.out.println("🔍 SERVER 3: Fetching SERVER3 data for: " + customerNumber);
             if (conn.getResponseCode() == 200) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 StringBuilder response = new StringBuilder();
-                while (true) {
-                    String readLine = reader.readLine();
-                    String line = readLine;
-                    if (readLine == null) {
-                        break;
-                    }
+                String line;
+                while ((line = reader.readLine()) != null) {
                     response.append(line);
                 }
                 JSONObject SERVER3Data = new JSONObject(response.toString());
@@ -527,19 +514,15 @@ public class MainActivity extends AppCompatActivity {
             HttpsURLConnection conn = (HttpsURLConnection) new URL("https://billonwebAPI.bpdb.gov.bd/API/CustomerInformation/" + accountNumber).openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-            conn.setRequestProperty(XIncludeHandler.HTTP_ACCEPT, "application/json");
+            conn.setRequestProperty("Accept", "application/json");
             conn.setConnectTimeout(10000);
             conn.setReadTimeout(15000);
             System.out.println("🔍 SERVER 2: Fetching data for: " + accountNumber);
             if (conn.getResponseCode() == 200) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 StringBuilder response = new StringBuilder();
-                while (true) {
-                    String readLine = reader.readLine();
-                    String line = readLine;
-                    if (readLine == null) {
-                        break;
-                    }
+                String line;
+                while ((line = reader.readLine()) != null) {
                     response.append(line);
                 }
                 JSONObject SERVER2Data = new JSONObject(response.toString());
@@ -594,7 +577,7 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println("❌ All SERVERs failed for prepaid data");
                 result.put("error", "All data sources failed");
             } else {
-                String source = (String) SERVER3Result.getOrDefault("source", EnvironmentCompat.MEDIA_UNKNOWN);
+                String source = (String) SERVER3Result.getOrDefault("source", "unknown");
                 System.out.println("📊 Prepaid data source: " + source);
                 if (SERVER3Result.containsKey("SERVER3_data")) {
                     result.put("SERVER3_data", SERVER3Result.get("SERVER3_data"));
@@ -617,7 +600,7 @@ public class MainActivity extends AppCompatActivity {
             System.out.println("❌ All SERVERs failed for postpaid data");
             result.put("error", "All data sources failed");
         } else {
-            String source = (String) SERVER3Result.getOrDefault("source", EnvironmentCompat.MEDIA_UNKNOWN);
+            String source = (String) SERVER3Result.getOrDefault("source", "unknown");
             System.out.println("📊 Postpaid data source: " + source);
             if (SERVER3Result.containsKey("SERVER3_data")) {
                 result.put("SERVER3_data", SERVER3Result.get("SERVER3_data"));
@@ -631,294 +614,9 @@ public class MainActivity extends AppCompatActivity {
         return result;
     }
 
-    private String extractDirectValue(JSONObject jsonObject, String key) {
-        String textValue;
-        try {
-            if (!jsonObject.has(key)) {
-                return "N/A";
-            }
-            Object value = jsonObject.get(key);
-            if (value instanceof JSONObject) {
-                JSONObject obj = (JSONObject) value;
-                if (!obj.has("_text") || (textValue = obj.getString("_text")) == null || textValue.isEmpty()) {
-                    return "N/A";
-                }
-                if (textValue.equals("{}")) {
-                    return "N/A";
-                }
-                return textValue.trim();
-            }
-            String stringValue = value.toString().trim();
-            if (stringValue.isEmpty() || stringValue.equals("{}")) {
-                return "N/A";
-            }
-            return stringValue;
-        } catch (Exception e) {
-            return "N/A";
-        }
-    }
-
-    private String getText(Object field) {
-        Object textValue;
-        if (field == null) {
-            return "N/A";
-        }
-        try {
-            if (field instanceof JSONObject) {
-                JSONObject obj = (JSONObject) field;
-                if (!obj.has("_text") || (textValue = obj.get("_text")) == null || textValue.toString().isEmpty() || textValue.toString().equals("{}")) {
-                    return "N/A";
-                }
-                String text = textValue.toString().trim();
-                if (text.isEmpty()) {
-                    return "N/A";
-                }
-                return text;
-            } else if (field.toString().equals("{}")) {
-                return "N/A";
-            } else {
-                String text2 = field.toString().trim();
-                if (text2.isEmpty() || text2.equals("{}")) {
-                    return "N/A";
-                }
-                return text2;
-            }
-        } catch (Exception e) {
-            return "N/A";
-        }
-    }
-
-    private Map<String, Object> cleanSERVER1Data(Object SERVER1DataObj) {
-        String responseBody;
-        System.out.println("=== DEBUG cleanSERVER1Data START ===");
-        if (SERVER1DataObj == null) {
-            System.out.println("❌ SERVER1DataObj is NULL");
-            Map<String, Object> result = new HashMap<>();
-            result.put("error", "No SERVER1 data available");
-            return result;
-        }
-        if (SERVER1DataObj instanceof String) {
-            responseBody = (String) SERVER1DataObj;
-        } else if (SERVER1DataObj instanceof JSONObject) {
-            responseBody = SERVER1DataObj.toString();
-        } else {
-            responseBody = SERVER1DataObj.toString();
-        }
-        System.out.println("📦 Raw response preview: " + responseBody.substring(0, Math.min(100, responseBody.length())) + "...");
-        Map<String, Object> cleaned = new HashMap<>();
-        try {
-            String jsonPart = extractActualJson(responseBody);
-            System.out.println("🔍 Extracted JSON preview: " + jsonPart.substring(0, Math.min(100, jsonPart.length())) + "...");
-            JSONObject SERVER1Data = new JSONObject(jsonPart);
-            if (SERVER1Data.has("mCustomerData")) {
-                System.out.println("✅ Found mCustomerData");
-                processCustomerDataDirect(SERVER1Data.getJSONObject("mCustomerData"), cleaned);
-            }
-            if (SERVER1Data.has("mOrderData")) {
-                System.out.println("✅ Found mOrderData - using exact pattern extraction");
-                List<Map<String, String>> transactions = extractTransactionsWithExactPatterns(responseBody);
-                if (!transactions.isEmpty()) {
-                    cleaned.put("recent_transactions", transactions);
-                    System.out.println("✅ Added " + transactions.size() + " transactions with tokens");
-                }
-            }
-        } catch (Exception e) {
-            System.out.println("❌ Exception in cleanSERVER1Data: " + e.getMessage());
-            e.printStackTrace();
-            cleaned.put("error", "Processing failed: " + e.getMessage());
-        }
-        System.out.println("🎯 Final cleaned data keys: " + cleaned.keySet());
-        System.out.println("=== DEBUG cleanSERVER1Data END ===\n");
-        return (Map) removeEmptyFields(cleaned);
-    }
-
-    private String extractActualJson(String responseBody) {
-        try {
-            int jsonStart = responseBody.indexOf("1:{");
-            if (jsonStart != -1) {
-                return responseBody.substring(jsonStart + 2);
-            }
-            return responseBody;
-        } catch (Exception e) {
-            return responseBody;
-        }
-    }
-
-    private List<Map<String, String>> extractTransactionsWithExactPatterns(String response) {
-        int index;
-        List<Map<String, String>> transactions = new ArrayList<>();
-        System.out.println("🔍 Looking for tokens with exact pattern...");
-        int index2 = 0;
-        int count = 0;
-        while (index2 != -1 && count < 3 && (index = response.indexOf("\"tokens\":{\"_text\":\"", index2)) != -1) {
-            int valueStart = "\"tokens\":{\"_text\":\"".length() + index;
-            int valueEnd = response.indexOf("\"", valueStart);
-            if (valueEnd != -1) {
-                String token = response.substring(valueStart, valueEnd);
-                System.out.println("🔑 FOUND TOKEN " + (count + 1) + ": " + token);
-                Map<String, String> transaction = extractTransactionFields(response, index);
-                transaction.put("Tokens", token);
-                transactions.add(transaction);
-                count++;
-            }
-            index2 = valueEnd + 1;
-        }
-        if (count == 0) {
-            System.out.println("❌ No tokens found with exact pattern");
-        }
-        return transactions;
-    }
-
-    private Map<String, String> extractTransactionFields(String response, int tokenPosition) {
-        Map<String, String> transaction = new HashMap<>();
-        String searchArea = response.substring(Math.max(0, tokenPosition + NotificationManagerCompat.IMPORTANCE_UNSPECIFIED), Math.min(response.length(), tokenPosition + 200));
-        transaction.put("Date", extractExactValue(searchArea, "date"));
-        transaction.put("Order Number", extractExactValue(searchArea, "orderNo"));
-        transaction.put("Amount", "৳" + extractExactValue(searchArea, "grossAmount"));
-        transaction.put("Energy Cost", "৳" + extractExactValue(searchArea, "energyCost"));
-        transaction.put("Operator", extractExactValue(searchArea, ConjugateGradient.OPERATOR));
-        transaction.put("Sequence", extractExactValue(searchArea, "sequence"));
-        return transaction;
-    }
-
-    private String extractExactValue(String text, String fieldName) {
-        int valueStart;
-        int valueEnd;
-        try {
-            String pattern = "\"" + fieldName + "\":{\"_text\":\"";
-            int start = text.indexOf(pattern);
-            if (start == -1 || (valueEnd = text.indexOf("\"", valueStart)) == -1) {
-                return "N/A";
-            }
-            return text.substring((valueStart = pattern.length() + start), valueEnd);
-        } catch (Exception e) {
-            return "N/A";
-        }
-    }
-
-    private void processCustomerDataDirect(JSONObject mCustomerData, Map<String, Object> cleaned) {
-        try {
-            if (mCustomerData.has("result")) {
-                JSONObject result = mCustomerData.getJSONObject("result");
-                Map<String, String> customerInfo = new HashMap<>();
-                customerInfo.put("Consumer Number", extractDirectValue(result, "customerAccountNo"));
-                customerInfo.put(SchemaSymbols.ATTVAL_NAME, extractDirectValue(result, "customerName"));
-                customerInfo.put("Address", extractDirectValue(result, "customerAddress"));
-                customerInfo.put("Phone", extractDirectValue(result, "customerPhone"));
-                customerInfo.put("Division", extractDirectValue(result, "division"));
-                customerInfo.put("Sub Division", extractDirectValue(result, "sndDivision"));
-                customerInfo.put("Tariff Category", extractDirectValue(result, "tariffCategory"));
-                customerInfo.put("Connection Category", extractDirectValue(result, "connectionCategory"));
-                customerInfo.put("Account Type", extractDirectValue(result, "accountType"));
-                customerInfo.put("Meter Type", extractDirectValue(result, "meterType"));
-                customerInfo.put("Sanctioned Load", extractDirectValue(result, "sanctionLoad"));
-                customerInfo.put("Meter Number", extractDirectValue(result, "meterNumber"));
-                customerInfo.put("Last Recharge Amount", extractDirectValue(result, "lastRechargeAmount"));
-                customerInfo.put("Last Recharge Time", extractDirectValue(result, "lastRechargeTime"));
-                customerInfo.put("Installation Date", extractDirectValue(result, "installationDate"));
-                customerInfo.put("Lock Status", extractDirectValue(result, "lockStatus"));
-                customerInfo.put("Total Recharge This Month", extractDirectValue(result, "totalRechargeThisMonth"));
-                cleaned.put("customer_info", removeEmptyFields(customerInfo));
-                System.out.println("✅ Added customer_info with " + customerInfo.size() + " fields");
-            }
-        } catch (Exception e) {
-            System.out.println("❌ Error processing customer data: " + e.getMessage());
-        }
-    }
-
-    private Map<String, Object> cleanSERVER2Data(JSONObject SERVER2Data) {
-        Map<String, Object> result = new HashMap<>();
-        try {
-            // Implementation of cleanSERVER2Data method
-            // ... (keeping the method structure but simplifying for brevity)
-            if (SERVER2Data != null && !SERVER2Data.has("error")) {
-                Map<String, Object> cleaned = new HashMap<>();
-                // Add your SERVER2 data cleaning logic here
-                result.putAll(cleaned);
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error cleaning SERVER2 data: " + e.getMessage());
-        }
-        return result;
-    }
-
-    private Map<String, String> parseFinalBalanceInfo(String balanceString) {
-        Map<String, String> balanceInfo = new HashMap<>();
-        if (balanceString == null || balanceString.isEmpty() || balanceString.equals("null")) {
-            return balanceInfo;
-        }
-        try {
-            System.out.println("🔍 PARSING finalBalanceInfo: " + balanceString);
-            if (balanceString.contains(",") || balanceString.contains(ParameterizedMessage.ERROR_MSG_SEPARATOR)) {
-                String[] parts = balanceString.split(",");
-                String totalBalance = parts[0].trim();
-                balanceInfo.put("Total Balance", totalBalance);
-                balanceInfo.put("Arrear Amount", totalBalance);
-                for (int i = 1; i < parts.length; i++) {
-                    String part = parts[i].trim();
-                    if (part.startsWith("PRN:")) {
-                        balanceInfo.put("PRN", part.substring(4).trim());
-                    } else if (part.startsWith("LPS:")) {
-                        balanceInfo.put("LPS", part.substring(4).trim());
-                    } else if (part.startsWith("VAT:")) {
-                        balanceInfo.put("VAT", part.substring(4).trim());
-                    } else if (part.startsWith("Current:")) {
-                        balanceInfo.put("Current Bill", part.substring(8).trim());
-                    } else if (part.startsWith("Arrear:")) {
-                        balanceInfo.put("Arrear Amount", part.substring(7).trim());
-                    }
-                }
-                System.out.println("✅ Parsed detailed balance: " + balanceInfo);
-                return balanceInfo;
-            }
-            balanceInfo.put("Total Balance", balanceString.trim());
-            balanceInfo.put("Arrear Amount", balanceString.trim());
-            System.out.println("✅ Parsed as simple total: " + balanceString);
-            return balanceInfo;
-        } catch (Exception e) {
-            System.out.println("❌ Error parsing finalBalanceInfo: " + e.getMessage());
-            balanceInfo.put("Total Balance", balanceString);
-            balanceInfo.put("Arrear Amount", balanceString);
-        }
-        return balanceInfo;
-    }
-
-    private Map<String, Object> cleanSERVER3Data(JSONObject SERVER3Data) {
-        if (SERVER3Data == null) {
-            return new HashMap();
-        }
-        Map<String, Object> cleaned = new HashMap<>();
-        Map<String, String> customerInfo = new HashMap<>();
-        customerInfo.put("Customer Number", SERVER3Data.optString("customerNumber"));
-        customerInfo.put("Customer Name", SERVER3Data.optString("customerName"));
-        customerInfo.put("Customer Address", SERVER3Data.optString("customerAddr"));
-        customerInfo.put("Father Name", SERVER3Data.optString("fatherName"));
-        customerInfo.put("Location Code", SERVER3Data.optString("locationCode"));
-        customerInfo.put("Area Code", SERVER3Data.optString("areaCode"));
-        customerInfo.put("Book Number", SERVER3Data.optString("bookNumber"));
-        customerInfo.put("Bill Group", SERVER3Data.optString("billGroup"));
-        customerInfo.put("Meter Number", SERVER3Data.optString("meterNum"));
-        customerInfo.put("Meter Condition", SERVER3Data.optString("meterConditionDesc"));
-        customerInfo.put("Sanctioned Load", SERVER3Data.optString("sanctionedLoad"));
-        customerInfo.put("Tariff Description", SERVER3Data.optString("tariffDesc"));
-        customerInfo.put("Walk Order", SERVER3Data.optString("walkOrder"));
-        customerInfo.put("Arrear Amount", SERVER3Data.optString("arrearAmount"));
-        String lastReadingSr = SERVER3Data.optString("lastBillReadingSr");
-        if (lastReadingSr != null && !lastReadingSr.equals("null") && !lastReadingSr.isEmpty()) {
-            customerInfo.put("Last Bill Reading SR", lastReadingSr);
-            cleaned.put("current_reading_sr", Double.valueOf(Double.parseDouble(lastReadingSr)));
-        }
-        customerInfo.put("Last Bill Reading OF PK", SERVER3Data.optString("lastBillReadingOfPk"));
-        customerInfo.put("Last Bill Reading PK", SERVER3Data.optString("lastBillReadingPk"));
-        cleaned.put("customer_info", removeEmptyFields(customerInfo));
-        if (SERVER3Data.has("arrearAmount")) {
-            String arrearAmount = SERVER3Data.optString("arrearAmount");
-            Map<String, String> balanceInfo = new HashMap<>();
-            balanceInfo.put("Total Balance", arrearAmount);
-            balanceInfo.put("Arrear Amount", arrearAmount);
-            cleaned.put("balance_info", balanceInfo);
-        }
-        return (Map) removeEmptyFields(cleaned);
+    // Add this missing method that ApplicationFormHelper needs
+    public Map<String, Object> mergeSERVERDataForApplication(Map<String, Object> map) {
+        return mergeSERVERData(map);
     }
 
     private Map<String, Object> mergeSERVERData(Map<String, Object> source) {
@@ -942,10 +640,10 @@ public class MainActivity extends AppCompatActivity {
             if (source.containsKey("SERVER2_data") && source.get("SERVER2_data") instanceof JSONObject) {
                 Map<String, Object> cleanedServer2 = cleanSERVER2Data((JSONObject) source.get("SERVER2_data"));
                 if (cleanedServer2.containsKey("customer_info")) {
-                    customerInfo.putAll((Map) cleanedServer2.get("customer_info"));
+                    customerInfo.putAll((Map<String, String>) cleanedServer2.get("customer_info"));
                 }
                 if (cleanedServer2.containsKey("balance_info")) {
-                    balanceInfo.putAll((Map) cleanedServer2.get("balance_info"));
+                    balanceInfo.putAll((Map<String, String>) cleanedServer2.get("balance_info"));
                 }
             }
 
@@ -953,10 +651,10 @@ public class MainActivity extends AppCompatActivity {
             if (source.containsKey("SERVER3_data") && source.get("SERVER3_data") instanceof JSONObject) {
                 Map<String, Object> cleanedServer3 = cleanSERVER3Data((JSONObject) source.get("SERVER3_data"));
                 if (cleanedServer3.containsKey("customer_info")) {
-                    customerInfo.putAll((Map) cleanedServer3.get("customer_info"));
+                    customerInfo.putAll((Map<String, String>) cleanedServer3.get("customer_info"));
                 }
                 if (cleanedServer3.containsKey("balance_info") && balanceInfo.isEmpty()) {
-                    balanceInfo.putAll((Map) cleanedServer3.get("balance_info"));
+                    balanceInfo.putAll((Map<String, String>) cleanedServer3.get("balance_info"));
                 }
             }
 
@@ -972,12 +670,92 @@ public class MainActivity extends AppCompatActivity {
         return result;
     }
 
+    private Map<String, Object> cleanSERVER2Data(JSONObject SERVER2Data) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            Map<String, String> customerInfo = new HashMap<>();
+            Map<String, String> balanceInfo = new HashMap<>();
+
+            // Extract customer info
+            if (SERVER2Data.has("customerInfo")) {
+                JSONArray customerInfoArray = SERVER2Data.getJSONArray("customerInfo");
+                if (customerInfoArray.length() > 0 && customerInfoArray.getJSONArray(0).length() > 0) {
+                    JSONObject firstCustomer = customerInfoArray.getJSONArray(0).getJSONObject(0);
+                    customerInfo.put("Customer Number", firstCustomer.optString("CUSTOMER_NUMBER"));
+                    customerInfo.put("Customer Name", firstCustomer.optString("CUSTOMER_NAME"));
+                    customerInfo.put("Address", firstCustomer.optString("ADDRESS"));
+                    customerInfo.put("Meter Number", firstCustomer.optString("METER_NUM"));
+                }
+            }
+
+            // Extract balance info
+            if (SERVER2Data.has("finalBalanceInfo")) {
+                String balanceString = SERVER2Data.optString("finalBalanceInfo");
+                if (!balanceString.isEmpty() && !balanceString.equals("null")) {
+                    balanceInfo.put("Total Balance", balanceString);
+                    balanceInfo.put("Arrear Amount", balanceString);
+                }
+            }
+
+            if (!customerInfo.isEmpty()) {
+                result.put("customer_info", customerInfo);
+            }
+            if (!balanceInfo.isEmpty()) {
+                result.put("balance_info", balanceInfo);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error cleaning SERVER2 data: " + e.getMessage());
+        }
+        return result;
+    }
+
+    private Map<String, Object> cleanSERVER3Data(JSONObject SERVER3Data) {
+        if (SERVER3Data == null) {
+            return new HashMap<>();
+        }
+        Map<String, Object> cleaned = new HashMap<>();
+        Map<String, String> customerInfo = new HashMap<>();
+        customerInfo.put("Customer Number", SERVER3Data.optString("customerNumber"));
+        customerInfo.put("Customer Name", SERVER3Data.optString("customerName"));
+        customerInfo.put("Customer Address", SERVER3Data.optString("customerAddr"));
+        customerInfo.put("Father Name", SERVER3Data.optString("fatherName"));
+        customerInfo.put("Location Code", SERVER3Data.optString("locationCode"));
+        customerInfo.put("Area Code", SERVER3Data.optString("areaCode"));
+        customerInfo.put("Book Number", SERVER3Data.optString("bookNumber"));
+        customerInfo.put("Bill Group", SERVER3Data.optString("billGroup"));
+        customerInfo.put("Meter Number", SERVER3Data.optString("meterNum"));
+        customerInfo.put("Meter Condition", SERVER3Data.optString("meterConditionDesc"));
+        customerInfo.put("Sanctioned Load", SERVER3Data.optString("sanctionedLoad"));
+        customerInfo.put("Tariff Description", SERVER3Data.optString("tariffDesc"));
+        customerInfo.put("Walk Order", SERVER3Data.optString("walkOrder"));
+        customerInfo.put("Arrear Amount", SERVER3Data.optString("arrearAmount"));
+        
+        String lastReadingSr = SERVER3Data.optString("lastBillReadingSr");
+        if (lastReadingSr != null && !lastReadingSr.equals("null") && !lastReadingSr.isEmpty()) {
+            customerInfo.put("Last Bill Reading SR", lastReadingSr);
+            cleaned.put("current_reading_sr", Double.valueOf(Double.parseDouble(lastReadingSr)));
+        }
+        
+        customerInfo.put("Last Bill Reading OF PK", SERVER3Data.optString("lastBillReadingOfPk"));
+        customerInfo.put("Last Bill Reading PK", SERVER3Data.optString("lastBillReadingPk"));
+        cleaned.put("customer_info", removeEmptyFields(customerInfo));
+        
+        if (SERVER3Data.has("arrearAmount")) {
+            String arrearAmount = SERVER3Data.optString("arrearAmount");
+            Map<String, String> balanceInfo = new HashMap<>();
+            balanceInfo.put("Total Balance", arrearAmount);
+            balanceInfo.put("Arrear Amount", arrearAmount);
+            cleaned.put("balance_info", balanceInfo);
+        }
+        return (Map<String, Object>) removeEmptyFields(cleaned);
+    }
+
     private String formatMergedDisplayWithoutTable(Map<String, Object> data) {
         StringBuilder output = new StringBuilder();
         if (data.containsKey("customer_info")) {
             output.append("👤 CUSTOMER INFORMATION\n");
             output.append("══════════════════════════════════════════════════\n");
-            Map<String, String> customerInfo = (Map) data.get("customer_info");
+            Map<String, String> customerInfo = (Map<String, String>) data.get("customer_info");
             for (Map.Entry<String, String> entry : customerInfo.entrySet()) {
                 if (isValidValue(entry.getValue())) {
                     output.append("• ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
@@ -987,7 +765,7 @@ public class MainActivity extends AppCompatActivity {
         if (data.containsKey("balance_info")) {
             output.append("\n💰 BALANCE INFORMATION\n");
             output.append("══════════════════════════════════════════════════\n");
-            Map<String, String> balanceInfo = (Map) data.get("balance_info");
+            Map<String, String> balanceInfo = (Map<String, String>) data.get("balance_info");
             for (Map.Entry<String, String> entry : balanceInfo.entrySet()) {
                 if (isValidValue(entry.getValue())) {
                     output.append("• ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
@@ -997,65 +775,60 @@ public class MainActivity extends AppCompatActivity {
         return output.toString();
     }
 
-    private Drawable createCellBackground(boolean isHeader) {
-        GradientDrawable border = new GradientDrawable();
-        border.setColor(isHeader ? -3355444 : -1);
-        border.setStroke(1, -7829368);
-        return border;
-    }
-
-    private Map<String, Object> createBillSummary(JSONArray billInfo) {
-        Map<String, Object> billSummary = new HashMap<>();
-        try {
-            if (billInfo.length() > 0) {
-                billSummary.put("total_bills", Integer.valueOf(billInfo.length()));
-                JSONObject latestBill = billInfo.getJSONObject(0);
-                billSummary.put("latest_bill_date", formatBillMonth(latestBill.optString("BILL_MONTH")));
-                billSummary.put("latest_bill_number", latestBill.optString("BILL_NO"));
-                billSummary.put("latest_consumption", Double.valueOf(latestBill.optDouble("CONS_KWH_SR", 0.0d)));
-                billSummary.put("latest_total_amount", Double.valueOf(latestBill.optDouble("TOTAL_BILL", 0.0d)));
-                billSummary.put("latest_balance", Double.valueOf(latestBill.optDouble("BALANCE", 0.0d)));
-                billSummary.put("current_reading_sr", Double.valueOf(latestBill.optDouble("CONS_KWH_SR", 0.0d)));
-                double recentConsumption = 0.0d;
-                for (int i = 0; i < Math.min(billInfo.length(), 3); i++) {
-                    recentConsumption += billInfo.getJSONObject(i).optDouble("CONS_KWH_SR", 0.0d);
+    private String formatPrepaidDisplay(Map<String, Object> cleanedData) {
+        if (cleanedData == null || cleanedData.isEmpty()) {
+            return "No prepaid data available";
+        }
+        StringBuilder output = new StringBuilder();
+        if (cleanedData.containsKey("customer_info")) {
+            output.append("👤 CUSTOMER INFORMATION\n");
+            output.append(repeatString("=", 20)).append("\n");
+            Map<String, String> customerInfo = (Map<String, String>) cleanedData.get("customer_info");
+            for (Map.Entry<String, String> entry : customerInfo.entrySet()) {
+                if (!entry.getValue().equals("N/A")) {
+                    output.append("• ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
                 }
-                billSummary.put("recent_consumption", Double.valueOf(recentConsumption));
-                billSummary.put("bill_months_available", Integer.valueOf(billInfo.length()));
             }
-        } catch (Exception e) {
-            System.out.println("❌ Error creating bill summary: " + e.getMessage());
+            output.append("\n");
         }
-        return billSummary;
+        return output.toString();
     }
 
-    private String truncateText(String text, int maxLength) {
-        if (text == null || text.length() <= maxLength) {
-            return text;
+    // Fixed removeEmptyFields method with proper generics
+    private <T> T removeEmptyFields(T data) {
+        if (data instanceof Map) {
+            Map<Object, Object> result = new HashMap<>();
+            Map<?, ?> mapData = (Map<?, ?>) data;
+            for (Map.Entry<?, ?> entry : mapData.entrySet()) {
+                Object key = entry.getKey();
+                Object value = entry.getValue();
+                if (key.toString().contains("bill") || key.toString().contains("balance")) {
+                    result.put(key, value);
+                } else {
+                    Object cleaned = removeEmptyFields(value);
+                    if (cleaned != null && !cleaned.equals("") && !cleaned.equals("N/A")) {
+                        if ((!(cleaned instanceof Map) || !((Map<?, ?>) cleaned).isEmpty()) && (!(cleaned instanceof List) || !((List<?>) cleaned).isEmpty())) {
+                            result.put(key, cleaned);
+                        }
+                    }
+                }
+            }
+            return (T) result;
+        } else if (data instanceof List) {
+            List<Object> result2 = new ArrayList<>();
+            List<?> listData = (List<?>) data;
+            for (Object item : listData) {
+                Object cleaned2 = removeEmptyFields(item);
+                if (cleaned2 != null && !cleaned2.equals("") && !cleaned2.equals("N/A")) {
+                    if ((!(cleaned2 instanceof Map) || !((Map<?, ?>) cleaned2).isEmpty()) && (!(cleaned2 instanceof List) || !((List<?>) cleaned2).isEmpty())) {
+                        result2.add(cleaned2);
+                    }
+                }
+            }
+            return (T) result2;
+        } else {
+            return data;
         }
-        return text.substring(0, maxLength - 3) + "...";
-    }
-
-    private String padRight(String text, int length) {
-        if (text == null) {
-            text = "";
-        }
-        if (text.length() > length) {
-            return text.substring(0, length - 3) + "...";
-        }
-        return String.format("%-" + length + "s", new Object[]{text});
-    }
-
-    private String centerText(String text, int length) {
-        if (text == null) {
-            text = "";
-        }
-        if (text.length() > length) {
-            return text.substring(0, length - 3) + "...";
-        }
-        int padding = length - text.length();
-        int leftPadding = padding / 2;
-        return repeatString(" ", leftPadding) + text + repeatString(" ", padding - leftPadding);
     }
 
     private boolean isValidValue(String value) {
@@ -1067,238 +840,6 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
         return true;
-    }
-
-    private String formatPrepaidDisplay(Map<String, Object> cleanedData) {
-        if (cleanedData == null || cleanedData.isEmpty()) {
-            return "No prepaid data available";
-        }
-        StringBuilder output = new StringBuilder();
-        if (cleanedData.containsKey("customer_info")) {
-            output.append("👤 CUSTOMER INFORMATION\n");
-            output.append(repeatString("=", 20)).append("\n");
-            for (Map.Entry<String, String> entry : ((Map) cleanedData.get("customer_info")).entrySet()) {
-                if (!entry.getValue().equals("N/A")) {
-                    output.append("• ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
-                }
-            }
-            output.append("\n");
-        }
-        if (cleanedData.containsKey("recent_transactions")) {
-            output.append("🔑 LAST 3 RECHARGE TOKENS\n");
-            output.append(repeatString("=", 20)).append("\n\n");
-            List<Map<String, String>> transactions = (List) cleanedData.get("recent_transactions");
-            for (int i = 0; i < transactions.size(); i++) {
-                Map<String, String> transaction = transactions.get(i);
-                output.append("Order ").append(i + 1).append(":\n");
-                output.append("  📅 Date: ").append(transaction.get("Date")).append("\n");
-                output.append("  🧾 Order: ").append(transaction.get("Order Number")).append("\n");
-                output.append("  👤 Operator: ").append(transaction.get("Operator")).append("\n");
-                output.append("  🔢 Sequence: ").append(transaction.get("Sequence")).append("\n");
-                output.append("  💰 Amount: ").append(transaction.get("Amount")).append("\n");
-                output.append("  ⚡ Energy: ").append(transaction.get("Energy Cost")).append("\n");
-                output.append("  🔑 TOKENS: ").append(transaction.get("Tokens")).append("\n\n");
-            }
-        }
-        return output.toString();
-    }
-
-    private String getMeterStatus(String statusCode) {
-        Map<String, String> statusMap = new HashMap<>();
-        statusMap.put(SchemaSymbols.ATTVAL_TRUE_1, "Active");
-        statusMap.put("2", "Inactive");
-        statusMap.put("3", "Disconnected");
-        return statusMap.getOrDefault(statusCode, "Unknown (" + statusCode + ")");
-    }
-
-    private String formatDate(String dateString) {
-        if (dateString == null || dateString.isEmpty()) {
-            return "N/A";
-        }
-        try {
-            if (dateString.contains("T")) {
-                return dateString.split("T")[0];
-            }
-            return dateString;
-        } catch (Exception e) {
-            return dateString;
-        }
-    }
-
-    private Map<String, String> extractBalanceInfo(String balanceString) {
-        Map<String, String> balanceInfo = new HashMap<>();
-        if (balanceString == null || balanceString.isEmpty()) {
-            return balanceInfo;
-        }
-        try {
-            if (!balanceString.contains(",")) {
-                if (!balanceString.contains(ParameterizedMessage.ERROR_MSG_SEPARATOR)) {
-                    balanceInfo.put("Total Balance", balanceString.trim());
-                    balanceInfo.put("Arrear Amount", balanceString.trim());
-                    return balanceInfo;
-                }
-            }
-            String[] parts = balanceString.split(",");
-            String mainBalance = parts[0].trim();
-            balanceInfo.put("Total Balance", mainBalance);
-            balanceInfo.put("Arrear Amount", mainBalance);
-            for (int i = 1; i < parts.length; i++) {
-                String part = parts[i].trim();
-                if (part.startsWith("PRN:")) {
-                    balanceInfo.put("PRN", part.substring(4).trim());
-                } else if (part.startsWith("LPS:")) {
-                    balanceInfo.put("LPS", part.substring(4).trim());
-                } else if (part.startsWith("VAT:")) {
-                    balanceInfo.put("VAT", part.substring(4).trim());
-                }
-            }
-        } catch (Exception e) {
-            System.out.println("⚠️ Balance parsing warning: " + e.getMessage());
-            balanceInfo.put("Total Balance", balanceString);
-        }
-        return balanceInfo;
-    }
-
-    private <T> T removeEmptyFields(T data) {
-        if (data instanceof Map) {
-            Map<Object, Object> result = new HashMap<>();
-            for (Map.Entry<?, ?> entry : data.entrySet()) {
-                Object key = entry.getKey();
-                Object value = entry.getValue();
-                if (key.toString().contains("bill") || key.toString().contains("balance")) {
-                    result.put(key, value);
-                } else {
-                    Object cleaned = removeEmptyFields(value);
-                    if (cleaned != null && !cleaned.equals("") && !cleaned.equals("N/A")) {
-                        if ((!(cleaned instanceof Map) || !((Map) cleaned).isEmpty()) && (!(cleaned instanceof List) || !((List) cleaned).isEmpty())) {
-                            result.put(key, cleaned);
-                        }
-                    }
-                }
-            }
-            return (T) result;
-        } else if (!(data instanceof List)) {
-            return data;
-        } else {
-            List<Object> result2 = new ArrayList<>();
-            for (Object item : (List) data) {
-                Object cleaned2 = removeEmptyFields(item);
-                if (cleaned2 != null && !cleaned2.equals("") && !cleaned2.equals("N/A")) {
-                    if ((!(cleaned2 instanceof Map) || !((Map) cleaned2).isEmpty()) && (!(cleaned2 instanceof List) || !((List) cleaned2).isEmpty())) {
-                        result2.add(cleaned2);
-                    }
-                }
-            }
-            return (T) result2;
-        }
-    }
-
-    private String formatBillDisplay(JSONObject SERVER2Data) {
-        if (SERVER2Data == null) {
-            return "No bill data available";
-        }
-        if (SERVER2Data.has("error")) {
-            return "Error in bill data: " + SERVER2Data.optString("error");
-        }
-        StringBuilder output = new StringBuilder();
-        try {
-            System.out.println("📊 BILL DEBUG: SERVER2Data keys: " + getJSONKeys(SERVER2Data));
-            if (SERVER2Data.has("billInfo")) {
-                JSONArray billInfo = SERVER2Data.getJSONArray("billInfo");
-                System.out.println("📊 BILL DEBUG: billInfo length: " + billInfo.length());
-                if (billInfo.length() > 0) {
-                    int billCount = Math.min(billInfo.length(), 3);
-                    output.append("📊 BILL HISTORY (LAST ").append(billCount).append(" MONTHS)\n\n");
-                    // Bill display logic
-                } else {
-                    output.append("❌ No bill history records found\n");
-                }
-            } else {
-                output.append("❌ No bill information available in response\n");
-            }
-        } catch (Exception e) {
-            output.append("❌ Error displaying bill data: ").append(e.getMessage()).append("\n");
-            e.printStackTrace();
-        }
-        return output.toString();
-    }
-
-    private String getFormattedBillValue(JSONObject bill, String fieldKey) {
-        String r0 = "N/A";
-        try {
-            if (!bill.has(fieldKey) || bill.isNull(fieldKey)) {
-                return r0;
-            }
-            // Implementation for formatting bill values
-            return bill.optString(fieldKey, r0);
-        } catch (Exception e) {
-            return r0;
-        }
-    }
-
-    private String formatBillMonth(String dateStr) {
-        if (dateStr == null || dateStr.isEmpty() || dateStr.equals("null")) {
-            return "N/A";
-        }
-        try {
-            String[] parts = dateStr.substring(0, 10).split(ProcessIdUtil.DEFAULT_PROCESSID);
-            if (parts.length >= 2) {
-                int year = Integer.parseInt(parts[0]);
-                int month = Integer.parseInt(parts[1]);
-                String[] monthNames = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-                if (month >= 1 && month <= 12) {
-                    return monthNames[month - 1] + ProcessIdUtil.DEFAULT_PROCESSID + year;
-                }
-            }
-            return dateStr.substring(0, 7);
-        } catch (Exception e) {
-            return dateStr.length() >= 7 ? dateStr.substring(0, 7) : dateStr;
-        }
-    }
-
-    private String getJSONKeys(JSONObject json) {
-        try {
-            Iterator<String> keys = json.keys();
-            List<String> keyList = new ArrayList<>();
-            while (keys.hasNext()) {
-                keyList.add(keys.next());
-            }
-            return String.join(", ", keyList);
-        } catch (Exception e) {
-            return "Error getting keys";
-        }
-    }
-
-    private String formatBillSummary(Map<String, Object> billSummary) {
-        if (billSummary == null || billSummary.isEmpty()) {
-            return "No bill summary available";
-        }
-        StringBuilder output = new StringBuilder();
-        try {
-            output.append("📅 Total Bills: ").append(billSummary.getOrDefault("total_bills", "N/A")).append("\n");
-            if (billSummary.containsKey("latest_bill_date")) {
-                output.append("📋 Latest Bill Date: ").append(billSummary.get("latest_bill_date")).append("\n");
-            }
-            if (billSummary.containsKey("latest_bill_number")) {
-                output.append("🧾 Latest Bill No: ").append(billSummary.get("latest_bill_number")).append("\n");
-            }
-            // Add more bill summary fields as needed
-        } catch (Exception e) {
-            output.append("❌ Error formatting bill summary: ").append(e.getMessage()).append("\n");
-        }
-        return output.toString();
-    }
-
-    private boolean isValidBillDisplay(String billDisplay) {
-        return billDisplay != null && !billDisplay.trim().isEmpty() && !billDisplay.contains("No bill data available") && !billDisplay.contains("No bill information available") && !billDisplay.contains("Error in bill data") && !billDisplay.contains("No bill summary available") && billDisplay.length() > 20;
-    }
-
-    private String repeatString(String str, int count) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < count; i++) {
-            sb.append(str);
-        }
-        return sb.toString();
     }
 
     private String displayResult(Map<String, Object> result, String billType) {
@@ -1324,12 +865,12 @@ public class MainActivity extends AppCompatActivity {
             }
         } else if ("postpaid".equals(billType)) {
             if (result.containsKey("customer_results")) {
-                List<String> customerNumbers = (List) result.get("customer_numbers");
-                List<Map<String, Object>> customerResults = (List) result.get("customer_results");
+                List<String> customerNumbers = (List<String>) result.get("customer_numbers");
+                List<Map<String, Object>> customerResults = (List<Map<String, Object>>) result.get("customer_results");
                 output.append("\n📊 Found ").append(customerNumbers.size()).append(" customer(s) for this meter\n\n");
                 for (int i = 0; i < customerResults.size(); i++) {
                     output.append(repeatString("=", 40)).append("\n");
-                    output.append("👤 CUSTOMER ").append(i + 1).append(PackagingURIHelper.FORWARD_SLASH_STRING).append(customerNumbers.size()).append(": ").append(customerNumbers.get(i)).append("\n");
+                    output.append("👤 CUSTOMER ").append(i + 1).append("/").append(customerNumbers.size()).append(": ").append(customerNumbers.get(i)).append("\n");
                     output.append(repeatString("=", 40)).append("\n");
                     Map<String, Object> mergedData2 = mergeSERVERData(customerResults.get(i));
                     if (mergedData2 == null || mergedData2.isEmpty()) {
@@ -1352,6 +893,15 @@ public class MainActivity extends AppCompatActivity {
         return output.toString();
     }
 
+    private String repeatString(String str, int count) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            sb.append(str);
+        }
+        return sb.toString();
+    }
+
+    // Storage permission methods
     private void checkStoragePermission() {
         if (Build.VERSION.SDK_INT >= 30) {
             if (!Environment.isExternalStorageManager()) {
@@ -1389,6 +939,7 @@ public class MainActivity extends AppCompatActivity {
         return ContextCompat.checkSelfPermission(this, "android.permission.WRITE_EXTERNAL_STORAGE") == 0;
     }
 
+    // Excel methods
     private Map<String, String> extractDataForExcel(Map<String, Object> result, String type) {
         Map<String, String> excelData = new HashMap<>();
         try {
@@ -1397,8 +948,8 @@ public class MainActivity extends AppCompatActivity {
                 excelData.put("Consumer Number", getSafeString(result.get("consumer_number")));
                 Map<String, Object> mergedData = mergeSERVERData(result);
                 if (mergedData != null) {
-                    Map<String, String> customerInfo = (Map) mergedData.get("customer_info");
-                    Map<String, String> balanceInfo = (Map) mergedData.get("balance_info");
+                    Map<String, String> customerInfo = (Map<String, String>) mergedData.get("customer_info");
+                    Map<String, String> balanceInfo = (Map<String, String>) mergedData.get("balance_info");
                     if (customerInfo != null) {
                         excelData.putAll(customerInfo);
                     }
@@ -1411,8 +962,8 @@ public class MainActivity extends AppCompatActivity {
                 excelData.put("Customer Number", getSafeString(result.get("customer_number")));
                 Map<String, Object> mergedData2 = mergeSERVERData(result);
                 if (mergedData2 != null) {
-                    Map<String, String> customerInfo2 = (Map) mergedData2.get("customer_info");
-                    Map<String, String> balanceInfo2 = (Map) mergedData2.get("balance_info");
+                    Map<String, String> customerInfo2 = (Map<String, String>) mergedData2.get("customer_info");
+                    Map<String, String> balanceInfo2 = (Map<String, String>) mergedData2.get("balance_info");
                     if (customerInfo2 != null) {
                         excelData.putAll(customerInfo2);
                     }
@@ -1447,7 +998,8 @@ public class MainActivity extends AppCompatActivity {
                 this.excelHelper.savePrepaidLookup("User", inputNumber, extractDataForExcel(result, "prepaid"));
             } else if (result.containsKey("customer_results")) {
                 List<Map<String, String>> excelDataList = new ArrayList<>();
-                for (Map<String, Object> customerResult : (List) result.get("customer_results")) {
+                List<Map<String, Object>> customerResults = (List<Map<String, Object>>) result.get("customer_results");
+                for (Map<String, Object> customerResult : customerResults) {
                     excelDataList.add(extractDataForExcel(customerResult, "postpaid"));
                 }
                 this.excelHelper.saveMultiplePostpaidLookups("User", excelDataList);
@@ -1472,6 +1024,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void shareExcelFile(String filePath) {
+        Toast.makeText(this, "Excel file saved: " + filePath, Toast.LENGTH_LONG).show();
+    }
+
+    // Application form methods
     private void openApplicationForm() {
         try {
             final WebView applicationWebView = new WebView(this);
@@ -1537,8 +1094,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /* access modifiers changed from: private */
-    public void showKeyboardForWebView(final WebView webView) {
+    private void showKeyboardForWebView(final WebView webView) {
         if (webView != null) {
             webView.postDelayed(() -> {
                 try {
@@ -1584,10 +1140,6 @@ public class MainActivity extends AppCompatActivity {
                 applicationFormHelper.hideLoading();
             }
         }, 30000);
-    }
-
-    private void shareExcelFile(String filePath) {
-        Toast.makeText(this, "Excel file saved: " + filePath, Toast.LENGTH_LONG).show();
     }
 
     /* access modifiers changed from: protected */
