@@ -36,6 +36,8 @@ import android.os.Environment;
 import android.content.Intent;
 import android.net.Uri;
 import android.provider.Settings;
+import android.webkit.JavascriptInterface;
+
 public class MainActivity extends AppCompatActivity {
 
     private EditText meterInput;
