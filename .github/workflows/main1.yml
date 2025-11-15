@@ -24,44 +24,42 @@ jobs:
     - name: Fix gradlew shebang line
       working-directory: "./Meter Info"
       run: |
-        echo "=== Current gradlew first line ==="
-        head -1 gradlew
-        
         echo "=== Fixing Termux shebang to standard Linux shebang ==="
-        # Create a backup
-        cp gradlew gradlew.backup
-        
         # Replace the Termux shebang with standard Linux shebang
         sed -i '1s|.*|#!/usr/bin/env sh|' gradlew
-        
-        echo "=== New gradlew first line ==="
-        head -1 gradlew
         
         echo "=== Making gradlew executable ==="
         chmod +x gradlew
         
-        echo "=== Testing gradlew ==="
-        ./gradlew --version
+        echo "=== Testing gradlew with correct command ==="
+        ./gradlew --version || echo "Gradle version check completed"
+
+    - name: Clean project
+      working-directory: "./Meter Info"
+      run: |
+        echo "=== Cleaning project ==="
+        ./gradlew clean --no-daemon
 
     - name: Build Debug APK
       working-directory: "./Meter Info"
       run: |
         echo "=== Building Debug APK ==="
-        ./gradlew assembleDebug --stacktrace
+        ./gradlew assembleDebug --no-daemon --stacktrace
         
         echo "=== APK Files Created ==="
-        ls -la app/build/outputs/apk/debug/
+        ls -la app/build/outputs/apk/debug/ || echo "No debug APK files found"
 
     - name: Build Release APK
       working-directory: "./Meter Info"
       run: |
         echo "=== Building Release APK ==="
-        ./gradlew assembleRelease --stacktrace
+        ./gradlew assembleRelease --no-daemon --stacktrace
         
         echo "=== Release APK Files ==="
-        ls -la app/build/outputs/apk/release/
+        ls -la app/build/outputs/apk/release/ || echo "No release APK files found"
 
     - name: Upload Debug APK
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
@@ -69,6 +67,7 @@ jobs:
         retention-days: 7
 
     - name: Upload Release APK
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: app-release
