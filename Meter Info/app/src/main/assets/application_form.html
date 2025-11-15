@@ -3,120 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>গ্রাহক তথ্য</title>
+    <title>আবেদনপত্র</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Noto Sans Bengali', 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 10px;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #2c3e50, #34495e);
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 8px;
-            font-weight: 700;
-        }
-
-        .header p {
-            font-size: 14px;
-            opacity: 0.9;
-        }
+        /* ... your existing styles ... */
 
         .search-section {
-            padding: 20px;
             background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
         }
+        <input type="text"
+       id="searchInput"
+       class="search-input"
+       placeholder="মিটার নং বা গ্রাহক নং লিখুন"
+       autofocus
+       autocapitalize="none"
+       autocorrect="off"
+       inputmode="numeric">
 
         .type-selector {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             margin-bottom: 15px;
-            background: white;
-            padding: 6px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .type-btn {
             flex: 1;
             padding: 10px;
-            border: none;
-            border-radius: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
             background: white;
             cursor: pointer;
             text-align: center;
-            font-family: inherit;
-            font-weight: 600;
-            font-size: 13px;
-            transition: all 0.3s ease;
+            font-family: 'Noto Sans Bengali', sans-serif;
         }
 
         .type-btn.active {
             background: #007bff;
             color: white;
-            box-shadow: 0 2px 8px rgba(0,123,255,0.3);
+            border-color: #007bff;
         }
 
         .search-row {
             display: flex;
             gap: 10px;
-            align-items: stretch;
+            align-items: center;
         }
 
         .search-input {
             flex: 1;
-            padding: 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-family: inherit;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: white;
-            font-size: 16px; /* Prevents zoom on iOS */
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: 'Noto Sans Bengali', sans-serif;
+            font-size: 14px;
         }
 
         .search-btn {
-            background: linear-gradient(135deg, #28a745, #20c997);
+            background: #007bff;
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
+            padding: 10px 20px;
+            border-radius: 4px;
             cursor: pointer;
-            font-family: inherit;
-            font-weight: 600;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            min-width: 100px;
+            font-family: 'Noto Sans Bengali', sans-serif;
         }
 
         .search-btn:disabled {
@@ -126,28 +78,9 @@
 
         .loading {
             display: none;
+            color: #007bff;
             text-align: center;
-            padding: 15px;
-            background: #e3f2fd;
-            border-radius: 8px;
-            margin-top: 12px;
-            color: #1976d2;
-            font-weight: 600;
-        }
-
-        .loading-spinner {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #1976d2;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 8px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            padding: 10px;
         }
 
         .error {
@@ -155,451 +88,223 @@
             color: #dc3545;
             background: #f8d7da;
             border: 1px solid #f5c6cb;
-            border-radius: 8px;
-            padding: 12px;
-            margin-top: 12px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 14px;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
         }
 
-        .data-section {
+        .form-section {
             display: none;
-            padding: 20px;
-        }
-
-        .info-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
-            border-left: 4px solid #007bff;
-        }
-
-        .info-title {
-            color: #2c3e50;
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-        }
-
-        .info-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .info-label {
-            font-weight: 600;
-            color: #6c757d;
-            font-size: 13px;
-        }
-
-        .info-value {
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 14px;
-            padding: 6px 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
-            border: 1px solid #e9ecef;
-            min-height: 36px;
-            display: flex;
-            align-items: center;
-        }
-
-        .balance-card {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            border-left-color: #e74c3c;
-        }
-
-        .balance-card .info-title {
-            color: white;
-        }
-
-        .balance-card .info-value {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: none;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            flex: 1;
-            min-width: 100px;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: inherit;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .btn-print {
-            background: linear-gradient(135deg, #17a2b8, #138496);
-            color: white;
-        }
-
-        .btn-close {
-            background: linear-gradient(135deg, #6c757d, #5a6268);
-            color: white;
-        }
-
-        .btn-back {
-            background: linear-gradient(135deg, #ffc107, #e0a800);
-            color: white;
-        }
-
-        @media (max-width: 600px) {
-            .search-row {
-                flex-direction: column;
-            }
-            
-            .action-buttons {
-                flex-direction: column;
-            }
-            
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            body {
-                padding: 5px;
-            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>বিদ্যুৎ গ্রাহক তথ্য</h1>
-            <p>বাংলাদেশ বিদ্যুৎ উন্নয়ন বোর্ড</p>
+<div class="application-container">
+    <!-- Search Section -->
+    <div class="search-section" id="searchSection">
+        <h2>গ্রাহক তথ্য খুঁজুন</h2>
+
+        <div class="type-selector">
+            <div class="type-btn active" id="prepaidBtn" onclick="selectType('prepaid')">প্রিপেইড</div>
+            <div class="type-btn" id="postpaidBtn" onclick="selectType('postpaid')">পোস্টপেইড</div>
         </div>
 
-        <div class="search-section" id="searchSection">
-            <div class="type-selector">
-                <button class="type-btn active" id="prepaidBtn" onclick="selectType('prepaid')">প্রিপেইড</button>
-                <button class="type-btn" id="postpaidBtn" onclick="selectType('postpaid')">পোস্টপেইড</button>
-            </div>
-
-            <div class="search-row">
-                <input type="tel" 
-                       id="searchInput" 
-                       class="search-input" 
-                       placeholder="১২ ডিজিটের মিটার নং লিখুন"
-                       autofocus
-                       autocapitalize="off"
-                       autocorrect="off"
-                       inputmode="numeric"
-                       pattern="[0-9]*">
-                <button onclick="fetchData()" id="searchBtn" class="search-btn">খুঁজুন</button>
-            </div>
-
-            <div class="loading" id="loading">
-                <div class="loading-spinner"></div>
-                ডেটা লোড হচ্ছে...
-            </div>
-            <div class="error" id="error"></div>
+        <div class="search-row">
+            <input type="text" id="searchInput" class="search-input" placeholder="মিটার নং বা গ্রাহক নং লিখুন">
+            <button onclick="fetchData()" id="searchBtn" class="search-btn">খুঁজুন</button>
         </div>
 
-        <div class="data-section" id="dataSection">
-            <div class="info-card" id="customerInfoCard">
-                <div class="info-title">গ্রাহক তথ্য</div>
-                <div class="info-grid" id="customerInfoGrid"></div>
-            </div>
-
-            <div class="info-card balance-card" id="balanceInfoCard">
-                <div class="info-title">বিল ও ব্যালেন্স</div>
-                <div class="info-grid" id="balanceInfoGrid"></div>
-            </div>
-
-            <div class="action-buttons">
-                <button class="btn btn-print" onclick="printData()">🖨️ প্রিন্ট</button>
-                <button class="btn btn-back" onclick="showSearchSection()">← নতুন খোঁজ</button>
-                <button class="btn btn-close" onclick="closeApp()">✕ বন্ধ</button>
-            </div>
-        </div>
+        <div class="loading" id="loading">ডেটা লোড হচ্ছে...</div>
+        <div class="error" id="error"></div>
     </div>
 
-    <script>
-        let selectedType = 'prepaid';
-        let currentData = null;
+    <!-- Form Section (initially hidden) -->
+    <div class="form-section" id="formSection">
+        <div class="header">
+            <h1>আবেদনপত্র</h1>
+            <p>
+                নির্বাহী প্রকৌশলী<br>
+                বিক্রয় ও বিতরণ বিভাগ<br>
+                বিদ্যুৎ উন্নয়ন বোর্ড, সুনামগঞ্জ।
+            </p>
+        </div>
 
-        // Enhanced keyboard focus with multiple fallbacks
-        function forceKeyboardFocus() {
-            const input = document.getElementById('searchInput');
-            if (!input) return;
+        <!-- ... your existing form fields ... -->
 
-            console.log('Forcing keyboard focus...');
-            
-            // Method 1: Direct focus
-            input.focus();
-            input.select();
-            
-            // Method 2: Use click to trigger focus
-            input.click();
-            
-            // Method 3: Use setTimeout for delayed focus
-            setTimeout(() => {
-                input.focus();
-                input.select();
-                input.click();
-            }, 100);
-            
-            // Method 4: Additional delayed attempts
-            setTimeout(() => {
-                input.focus();
-                input.select();
-                // Request Android keyboard
-                if (window.AndroidInterface) {
-                    AndroidInterface.showKeyboard();
-                }
-                if (window.KeyboardInterface) {
-                    KeyboardInterface.showKeyboard();
-                }
-            }, 300);
-            
-            // Method 5: Create and dispatch focus events
-            setTimeout(() => {
-                const focusEvent = new Event('focus', { bubbles: true });
-                input.dispatchEvent(focusEvent);
-                
-                const clickEvent = new Event('click', { bubbles: true });
-                input.dispatchEvent(clickEvent);
-            }, 500);
+        <div class="action-buttons">
+            <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+            <button class="btn btn-close" onclick="closeForm()">✕ বন্ধ</button>
+            <button class="btn btn-back" onclick="showSearchSection()">← নতুন খোঁজ</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedType = 'prepaid';
+
+    function selectType(type) {
+        selectedType = type;
+        document.getElementById('prepaidBtn').classList.toggle('active', type === 'prepaid');
+        document.getElementById('postpaidBtn').classList.toggle('active', type === 'postpaid');
+
+        const input = document.getElementById('searchInput');
+        if (type === 'prepaid') {
+            input.placeholder = '১২ ডিজিটের মিটার নং লিখুন';
+        } else {
+            input.placeholder = 'গ্রাহক নং বা মিটার নং লিখুন';
+        }
+    }
+
+    function fetchData() {
+        const input = document.getElementById('searchInput').value.trim();
+        if (!input) {
+            showError('দয়া করে মিটার নং বা গ্রাহক নং লিখুন!');
+            return;
         }
 
-        function pageReady() {
-            console.log('Page ready - initializing keyboard');
-            forceKeyboardFocus();
-        }
+        showLoading();
+        hideError();
 
-        function selectType(type) {
-            selectedType = type;
-            document.getElementById('prepaidBtn').classList.toggle('active', type === 'prepaid');
-            document.getElementById('postpaidBtn').classList.toggle('active', type === 'postpaid');
-
-            const input = document.getElementById('searchInput');
-            const placeholder = type === 'prepaid' ? '১২ ডিজিটের মিটার নং লিখুন' : 'গ্রাহক নং বা মিটার নং লিখুন';
-            input.placeholder = placeholder;
-            input.value = '';
-            
-            forceKeyboardFocus();
-        }
-
-        function fetchData() {
-            const input = document.getElementById('searchInput');
-            const inputValue = input.value.trim();
-            
-            if (!inputValue) {
-                showError('দয়া করে মিটার নং বা গ্রাহক নং লিখুন!');
-                forceKeyboardFocus();
-                return;
-            }
-
-            if (selectedType === 'prepaid' && inputValue.length !== 12) {
-                showError('প্রিপেইড মিটার নং ১২ ডিজিটের হতে হবে!');
-                forceKeyboardFocus();
-                return;
-            }
-
-            if (!/^\d+$/.test(inputValue)) {
-                showError('দয়া করে শুধুমাত্র সংখ্যা লিখুন!');
-                forceKeyboardFocus();
-                return;
-            }
-
-            console.log('Fetching data for:', inputValue, 'Type:', selectedType);
-            showLoading();
-            hideError();
-
-            // Call Android interface
-            if (window.AndroidInterface) {
-                try {
-                    window.AndroidInterface.fetchDataForApplication(inputValue, selectedType);
-                } catch (e) {
-                    console.error('Error calling AndroidInterface:', e);
-                    hideLoading();
-                    showError('Android interface error: ' + e.message);
-                }
-            } else {
-                console.error('AndroidInterface not found');
+        if (window.AndroidInterface) {
+            console.log('Calling AndroidInterface with:', input, selectedType);
+            window.AndroidInterface.fetchDataForApplication(input, selectedType);
+        } else {
+            console.log('AndroidInterface not available');
+            // Simulate timeout after 10 seconds
+            setTimeout(() => {
                 hideLoading();
-                showError('Android interface not available');
-            }
+                showError('Connection failed: Android interface not available');
+            }, 10000);
+        }
+    }
+
+    function showLoading() {
+        console.log('Showing loading...');
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('searchBtn').disabled = true;
+        document.getElementById('searchBtn').textContent = 'খুঁজছি...';
+    }
+
+    function hideLoading() {
+        console.log('Hiding loading...');
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('searchBtn').disabled = false;
+        document.getElementById('searchBtn').textContent = 'খুঁজুন';
+    }
+
+    function showError(message) {
+        console.log('Showing error:', message);
+        document.getElementById('error').textContent = message;
+        document.getElementById('error').style.display = 'block';
+        hideLoading();
+    }
+
+    function hideError() {
+        document.getElementById('error').style.display = 'none';
+    }
+
+    function showSearchSection() {
+        document.getElementById('searchSection').style.display = 'block';
+        document.getElementById('formSection').style.display = 'none';
+        clearForm();
+        hideError();
+    }
+
+    function closeForm() {
+        if (window.AndroidInterface) {
+            AndroidInterface.closeApplication();
+        }
+    }
+
+    function clearForm() {
+        document.getElementById('customerName').textContent = '';
+        document.getElementById('fatherName').textContent = '';
+        document.getElementById('address').textContent = '';
+        document.getElementById('mobileNo').textContent = '';
+        document.getElementById('meterNo').textContent = '';
+        document.getElementById('consumerNo').textContent = '';
+        document.getElementById('arrear').textContent = '...........';
+
+        const tbody = document.getElementById('rechargeTable');
+        tbody.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td></td><td></td>';
+            tbody.appendChild(tr);
+        }
+    }
+
+    // Function to be called from Android to fill form
+    function fillFormWithData(data) {
+        console.log('Filling form with data:', data);
+
+        // Always hide loading when data arrives
+        hideLoading();
+
+        if (data.error) {
+            showError('Error: ' + data.error);
+            return;
         }
 
-        function fillDataDisplay(data) {
-            console.log('Received data for display:', data);
-            currentData = data;
-            
-            // Populate customer information
-            const customerGrid = document.getElementById('customerInfoGrid');
-            customerGrid.innerHTML = '';
-            
-            if (data.customer_info && Object.keys(data.customer_info).length > 0) {
-                for (const [key, value] of Object.entries(data.customer_info)) {
-                    if (value && value !== 'N/A' && value !== 'null') {
-                        const item = createInfoItem(key, value);
-                        customerGrid.appendChild(item);
-                    }
-                }
-                document.getElementById('customerInfoCard').style.display = 'block';
-            } else {
-                document.getElementById('customerInfoCard').style.display = 'none';
-            }
+        document.getElementById('customerName').textContent = data.customer_name || '';
+        document.getElementById('fatherName').textContent = data.father_name || '';
+        document.getElementById('address').textContent = data.address || '';
+        document.getElementById('mobileNo').textContent = data.mobile_no || '';
+        document.getElementById('meterNo').textContent = data.meter_no || '';
+        document.getElementById('consumerNo').textContent = data.consumer_no || '';
 
-            // Populate balance information
-            const balanceGrid = document.getElementById('balanceInfoGrid');
-            balanceGrid.innerHTML = '';
-            
-            if (data.balance_info && Object.keys(data.balance_info).length > 0) {
-                for (const [key, value] of Object.entries(data.balance_info)) {
-                    if (value && value !== 'N/A' && value !== 'null') {
-                        const item = createInfoItem(key, value);
-                        balanceGrid.appendChild(item);
-                    }
-                }
-                document.getElementById('balanceInfoCard').style.display = 'block';
-            } else {
-                document.getElementById('balanceInfoCard').style.display = 'none';
-            }
-
-            // Show data section
-            document.getElementById('searchSection').style.display = 'none';
-            document.getElementById('dataSection').style.display = 'block';
+        if (data.arrear && data.arrear !== '0' && data.arrear !== 'N/A') {
+            document.getElementById('arrear').textContent = data.arrear.startsWith('৳') ? data.arrear : '৳' + data.arrear;
+        } else {
+            document.getElementById('arrear').textContent = '...........';
         }
 
-        function createInfoItem(label, value) {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'info-item';
-            itemDiv.innerHTML = `
-                <div class="info-label">${label}</div>
-                <div class="info-value">${value}</div>
-            `;
-            return itemDiv;
-        }
+        const tbody = document.getElementById('rechargeTable');
+        tbody.innerHTML = '';
 
-        function showSearchSection() {
-            document.getElementById('searchSection').style.display = 'block';
-            document.getElementById('dataSection').style.display = 'none';
-            document.getElementById('searchInput').value = '';
-            hideError();
-            setTimeout(forceKeyboardFocus, 100);
-        }
-
-        function printData() {
-            window.print();
-        }
-
-        function closeApp() {
-            if (window.AndroidInterface) {
-                AndroidInterface.closeApplication();
-            }
-        }
-
-        function showLoading() {
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('searchBtn').disabled = true;
-            document.getElementById('searchBtn').textContent = 'খুঁজছি...';
-        }
-
-        function hideLoading() {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('searchBtn').disabled = false;
-            document.getElementById('searchBtn').textContent = 'খুঁজুন';
-        }
-
-        function showError(message) {
-            document.getElementById('error').textContent = message;
-            document.getElementById('error').style.display = 'block';
-            hideLoading();
-            setTimeout(forceKeyboardFocus, 100);
-        }
-
-        function hideError() {
-            document.getElementById('error').style.display = 'none';
-        }
-
-        // Function called from Android to fill data
-        function fillFormWithData(data) {
-            console.log('fillFormWithData called with:', data);
-            hideLoading();
-
-            if (data && data.error) {
-                showError('ত্রুটি: ' + data.error);
-                return;
-            }
-
-            if (!data) {
-                showError('কোন ডেটা পাওয়া যায়নি');
-                return;
-            }
-
-            fillDataDisplay(data);
-        }
-
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded');
-            
-            // Multiple focus attempts on load
-            setTimeout(forceKeyboardFocus, 100);
-            setTimeout(forceKeyboardFocus, 500);
-            setTimeout(forceKeyboardFocus, 1000);
-            
-            // Enter key support
-            document.getElementById('searchInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    fetchData();
-                }
+        if (data.recharges && data.recharges.length > 0) {
+            data.recharges.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${r.Date || ''}</td><td>${r.Amount || ''}</td>`;
+                tbody.appendChild(tr);
             });
 
-            // Focus on any click in search section
-            document.getElementById('searchSection').addEventListener('click', function() {
-                forceKeyboardFocus();
-            });
+            // Fill remaining rows if less than 4
+            for (let i = data.recharges.length; i < 4; i++) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td></td><td></td>';
+                tbody.appendChild(tr);
+            }
+        } else {
+            // Add empty rows if no data
+            for (let i = 0; i < 4; i++) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td></td><td></td>';
+                tbody.appendChild(tr);
+            }
+        }
 
-            // Handle paste events
-            document.getElementById('searchInput').addEventListener('paste', function(e) {
-                setTimeout(() => {
-                    const value = e.target.value.trim();
-                    if (value && /^\d+$/.test(value)) {
-                        // Auto-submit if valid number is pasted
-                        if ((selectedType === 'prepaid' && value.length === 12) || selectedType === 'postpaid') {
-                            setTimeout(() => fetchData(), 100);
-                        }
-                    }
-                }, 100);
-            });
-        });
+        // Show the form section
+        document.getElementById('searchSection').style.display = 'none';
+        document.getElementById('formSection').style.display = 'block';
+    }
 
-        // Call page ready
-        pageReady();
-    </script>
+    // Auto-focus on input
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            var input = document.getElementById('searchInput');
+            if (input) {
+                input.focus();
+            }
+        }, 500);
+    });
+
+    // Allow Enter key to search
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            fetchData();
+        }
+    });
+</script>
 </body>
 </html>
