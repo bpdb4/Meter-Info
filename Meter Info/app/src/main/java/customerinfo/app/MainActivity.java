@@ -1028,89 +1028,100 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, "Excel file saved: " + filePath, Toast.LENGTH_LONG).show();
     }
 
-    // Application form methods
-    private void openApplicationForm() {
+// Add this method to show keyboard
+@JavascriptInterface
+public void showKeyboard() {
+    runOnUiThread(() -> {
         try {
-            final WebView applicationWebView = new WebView(this);
-            WebSettings webSettings = applicationWebView.getSettings();
-            webSettings.setJavaScriptEnabled(true);
-            webSettings.setDomStorageEnabled(true);
-            webSettings.setAllowFileAccess(true);
-            ApplicationFormHelper applicationFormHelper2 = new ApplicationFormHelper(this, applicationWebView);
-            this.applicationFormHelper = applicationFormHelper2;
-            applicationWebView.addJavascriptInterface(applicationFormHelper2, "AndroidInterface");
-            applicationWebView.setWebViewClient(new WebViewClient() {
-                public void onPageFinished(WebView view, String url) {
-                    super.onPageFinished(view, url);
-                    Log.d("ApplicationForm", "Page finished loading: " + url);
-                    showKeyboardForWebView(applicationWebView);
-                }
-
-                public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-                    super.onReceivedError(view, errorCode, description, failingUrl);
-                    Log.e("ApplicationForm", "WebView error: " + description);
-                    if (applicationFormHelper != null) {
-                        applicationFormHelper.hideLoading();
-                    }
-                }
-            });
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("আবেদনপত্র");
-            builder.setView(applicationWebView);
-            builder.setPositiveButton("প্রিন্ট", (dialog, which) -> {
-                try {
-                    applicationWebView.evaluateJavascript("window.print();", null);
-                } catch (Exception e) {
-                    Log.e("ApplicationForm", "Print error: " + e.getMessage());
-                }
-            });
-            builder.setNegativeButton("বন্ধ", (dialog, which) -> {
-                dialog.dismiss();
-                showStartupScreen();
-            });
-            AlertDialog dialog = builder.create();
-            dialog.setOnShowListener(dialogInterface -> {
-                Log.d("ApplicationForm", "Dialog shown");
-                showKeyboardForWebView(applicationWebView);
-            });
-            dialog.setOnCancelListener(d -> {
-                Log.d("ApplicationForm", "Dialog cancelled");
-                showStartupScreen();
-            });
-            dialog.show();
-            try {
-                applicationWebView.loadUrl("file:///android_asset/application_form.html");
-                Log.d("ApplicationForm", "Loading HTML from assets");
-            } catch (Exception e) {
-                Log.e("ApplicationForm", "Error loading HTML: " + e.getMessage());
-                if (applicationFormHelper != null) {
-                    applicationFormHelper.showError("Failed to load application form: " + e.getMessage());
-                }
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
             }
         } catch (Exception e) {
-            Log.e("ApplicationForm", "Error opening application form: " + e.getMessage());
-            Toast.makeText(this, "Error opening application form", Toast.LENGTH_SHORT).show();
-            showStartupScreen();
+            Log.e("Keyboard", "Error showing keyboard: " + e.getMessage());
         }
-    }
+    });
+}
 
-    private void showKeyboardForWebView(final WebView webView) {
-        if (webView != null) {
-            webView.postDelayed(() -> {
-                try {
-                    webView.evaluateJavascript("javascript:document.getElementById('searchInput').focus();", null);
-                    webView.requestFocus();
-                    InputMethodManager imm = (InputMethodManager) getSystemService("input_method");
+// Update your WebView client to call pageReady
+private void openApplicationForm() {
+    try {
+        final WebView applicationWebView = new WebView(this);
+        WebSettings webSettings = applicationWebView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
+        webSettings.setDomStorageEnabled(true);
+        webSettings.setAllowFileAccess(true);
+        
+        ApplicationFormHelper applicationFormHelper2 = new ApplicationFormHelper(this, applicationWebView);
+        this.applicationFormHelper = applicationFormHelper2;
+        applicationWebView.addJavascriptInterface(applicationFormHelper2, "AndroidInterface");
+        
+        // Add JavaScript interface for keyboard
+        applicationWebView.addJavascriptInterface(new Object() {
+            @JavascriptInterface
+            public void showKeyboard() {
+                runOnUiThread(() -> {
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                     if (imm != null) {
-                        imm.showSoftInput(webView, 1);
+                        imm.showSoftInput(applicationWebView, InputMethodManager.SHOW_IMPLICIT);
                     }
-                } catch (Exception e) {
-                    Log.e("Keyboard", "Error showing keyboard: " + e.getMessage());
-                }
-            }, 1000);
-        }
-    }
+                });
+            }
+        }, "KeyboardInterface");
 
+        applicationWebView.setWebViewClient(new WebViewClient() {
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                Log.d("ApplicationForm", "Page finished loading: " + url);
+                
+                // Force keyboard to show after page load
+                new Handler().postDelayed(() -> {
+                    view.evaluateJavascript("javascript:pageReady();", null);
+                    view.evaluateJavascript("javascript:forceKeyboardFocus();", null);
+                    
+                    // Additional focus attempts
+                    view.evaluateJavascript("javascript:document.getElementById('searchInput').focus();", null);
+                    view.evaluateJavascript("javascript:document.getElementById('searchInput').select();", null);
+                }, 500);
+            }
+
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                super.onReceivedError(view, errorCode, description, failingUrl);
+                Log.e("ApplicationForm", "WebView error: " + description);
+                if (applicationFormHelper != null) {
+                    applicationFormHelper.hideLoading();
+                }
+            }
+        });
+
+        // Rest of your dialog code...
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("আবেদনপত্র");
+        builder.setView(applicationWebView);
+        builder.setPositiveButton("প্রিন্ট", (dialog, which) -> {
+            try {
+                applicationWebView.evaluateJavascript("window.print();", null);
+            } catch (Exception e) {
+                Log.e("ApplicationForm", "Print error: " + e.getMessage());
+            }
+        });
+        builder.setNegativeButton("বন্ধ", (dialog, which) -> {
+            dialog.dismiss();
+            showStartupScreen();
+        });
+        
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Load your HTML
+        applicationWebView.loadUrl("file:///android_asset/application_form.html");
+        
+    } catch (Exception e) {
+        Log.e("ApplicationForm", "Error opening application form: " + e.getMessage());
+        Toast.makeText(this, "Error opening application form", Toast.LENGTH_SHORT).show();
+        showStartupScreen();
+    }
+}
     public void fetchDataForApplicationForm(String inputNumber, String billType) {
         this.selectedType = billType;
         ApplicationFormHelper applicationFormHelper2 = this.applicationFormHelper;
