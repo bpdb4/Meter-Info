@@ -2,13 +2,10 @@ package customerinfo.app;
 
 import android.content.Context;
 import android.webkit.JavascriptInterface;
-import android.webkit.ValueCallback;
 import android.webkit.WebView;
 import android.widget.Toast;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.xerces.impl.xs.SchemaSymbols;
-import org.apache.xml.serialize.LineSeparator;
 
 public class ApplicationFormHelper {
     private Context context;
@@ -21,12 +18,12 @@ public class ApplicationFormHelper {
 
     @JavascriptInterface
     public void showToast(String message) {
-        Toast.makeText(this.context, message, 0).show();
+        Toast.makeText(this.context, message, Toast.LENGTH_SHORT).show();
     }
 
     @JavascriptInterface
     public void closeApplication() {
-        // Close the application form
+        // This will be handled by the dialog's close button
     }
 
     @JavascriptInterface
@@ -56,7 +53,7 @@ public class ApplicationFormHelper {
         StringBuilder js = new StringBuilder();
         js.append("javascript:(function() {");
         js.append("hideLoading();");
-        
+
         if (result == null || result.containsKey("error")) {
             String errorMessage = "No data available";
             if (result != null && result.get("error") != null) {
@@ -69,14 +66,14 @@ public class ApplicationFormHelper {
 
         // Extract data for form filling
         Map<String, Object> mergedData = mergeSERVERData(result);
-        
+
         js.append("var data = {");
-        
+
         // Meter number
         if (result.get("meter_number") != null) {
             js.append("meter_no: '").append(escapeJavaScript(result.get("meter_number").toString())).append("',");
         }
-        
+
         // Consumer/Customer number
         if (result.get("consumer_number") != null) {
             js.append("consumer_no: '").append(escapeJavaScript(result.get("consumer_number").toString())).append("',");
@@ -88,24 +85,24 @@ public class ApplicationFormHelper {
         if (mergedData != null && !mergedData.isEmpty()) {
             if (mergedData.containsKey("customer_info")) {
                 Map<String, String> customerInfo = (Map) mergedData.get("customer_info");
-                
+
                 // Required fields for the form
                 js.append("customer_name: '").append(escapeJavaScript(
                     customerInfo.getOrDefault("Customer Name", 
                     customerInfo.getOrDefault("Name", "")))).append("',");
-                
+
                 js.append("father_name: '").append(escapeJavaScript(
                     customerInfo.getOrDefault("Father Name", ""))).append("',");
-                
+
                 js.append("address: '").append(escapeJavaScript(
                     customerInfo.getOrDefault("Customer Address", 
                     customerInfo.getOrDefault("Address", "")))).append("',");
-                
+
                 js.append("mobile_no: '").append(escapeJavaScript(
                     customerInfo.getOrDefault("Phone", 
                     customerInfo.getOrDefault("Mobile", "")))).append("',");
             }
-            
+
             // Balance information for arrear
             if (mergedData.containsKey("balance_info")) {
                 Map<String, String> balanceInfo = (Map) mergedData.get("balance_info");
@@ -119,12 +116,12 @@ public class ApplicationFormHelper {
         if (js.charAt(js.length() - 1) == ',') {
             js.setLength(js.length() - 1);
         }
-        
+
         js.append("};");
         js.append("console.log('Filling form with data:', data);");
         js.append("fillFormWithData(data);");
         js.append("})();");
-        
+
         return js.toString();
     }
 
@@ -160,17 +157,17 @@ public class ApplicationFormHelper {
             if (arrear == null || arrear.equals("N/A") || arrear.isEmpty()) {
                 return "...........";
             }
-            
+
             String cleanArrear = arrear.replaceAll("[^\\d.]", "");
             if (cleanArrear.isEmpty() || cleanArrear.equals("0") || cleanArrear.equals("0.0") || cleanArrear.equals("0.00")) {
                 return "...........";
             }
-            
+
             double amount = Double.parseDouble(cleanArrear);
             if (amount == 0.0d) {
                 return "...........";
             }
-            
+
             return "৳" + String.format("%.0f", amount);
         } catch (Exception e) {
             return "...........";
