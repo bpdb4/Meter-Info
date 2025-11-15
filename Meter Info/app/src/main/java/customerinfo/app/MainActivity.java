@@ -32,12 +32,18 @@ import android.content.Intent;
 import android.net.Uri;
 import android.provider.Settings;
 
-// Add these imports for application form
+// Application form imports
 import android.webkit.WebView;
 import android.webkit.WebSettings;
 import android.webkit.WebViewClient;
 import androidx.appcompat.app.AlertDialog;
 import android.view.inputmethod.InputMethodManager;
+import android.content.Context;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.graphics.Rect;
+import android.os.Handler;
+import android.view.inputmethod.EditorInfo;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -171,6 +177,11 @@ public class MainActivity extends AppCompatActivity {
         updateButtonStates();
         updatePostpaidSubOptions();
         updateInputHint();
+        
+        // Show keyboard automatically
+        new Handler().postDelayed(() -> {
+            showKeyboard();
+        }, 300);
     }
 
     private void setupClickListeners() {
@@ -180,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
             updateButtonStates();
             updateInputHint();
             showResult("📱 Prepaid selected - Enter 12-digit meter number");
+            showKeyboard();
         });
 
         postpaidBtn.setOnClickListener(v -> {
@@ -188,6 +200,7 @@ public class MainActivity extends AppCompatActivity {
             updateButtonStates();
             updateInputHint();
             showResult("💡 Postpaid selected - Choose input type");
+            showKeyboard();
         });
 
         // Postpaid sub-options listeners
@@ -197,11 +210,13 @@ public class MainActivity extends AppCompatActivity {
                 updatePostpaidSubOptions();
                 updateInputHint();
                 showResult("👤 Consumer No selected - Enter consumer number");
+                showKeyboard();
             } else if (checkedId == R.id.meterNoOption) {
                 postpaidSubType = "meter_no";
                 updatePostpaidSubOptions();
                 updateInputHint();
                 showResult("🔢 Meter No selected - Enter meter number");
+                showKeyboard();
             }
         });
 
@@ -217,8 +232,56 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
+            // Hide keyboard when searching
+            hideKeyboard();
             fetchData(inputNumber);
         });
+
+        // Add keyboard handling for EditText
+        meterInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    // Hide keyboard and trigger search
+                    hideKeyboard();
+                    submitBtn.performClick();
+                    return true;
+                }
+                return false;
+            }
+        });
+    }
+
+    // Keyboard methods
+    private void showKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null && meterInput != null) {
+            meterInput.requestFocus();
+            imm.showSoftInput(meterInput, InputMethodManager.SHOW_IMPLICIT);
+        }
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null && meterInput != null) {
+            imm.hideSoftInputFromWindow(meterInput.getWindowToken(), 0);
+        }
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+            View v = getCurrentFocus();
+            if (v instanceof EditText) {
+                Rect outRect = new Rect();
+                v.getGlobalVisibleRect(outRect);
+                if (!outRect.contains((int)ev.getRawX(), (int)ev.getRawY())) {
+                    v.clearFocus();
+                    hideKeyboard();
+                }
+            }
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
     private void updateButtonStates() {
@@ -705,16 +768,20 @@ public class MainActivity extends AppCompatActivity {
         return result;
     }
 
+    // Add this missing method for ApplicationFormHelper
+    public Map<String, Object> mergeSERVERDataForApplication(Map<String, Object> map) {
+        // For application form, use the same merging logic as regular lookup
+        return mergeSERVERData(map);
+    }
+
     private Map<String, Object> cleanSERVER1Data(Object SERVER1DataObj) {
         Map<String, Object> result = new HashMap<>();
-        // Basic SERVER1 data cleaning - expand as needed
+        // Basic SERVER1 data cleaning
         try {
             if (SERVER1DataObj instanceof String) {
                 String response = (String) SERVER1DataObj;
-                // Extract basic info from SERVER1 response
                 Map<String, String> customerInfo = new HashMap<>();
                 
-                // Add your SERVER1 parsing logic here
                 String consumerNumber = extractConsumerNumber(response);
                 if (consumerNumber != null) {
                     customerInfo.put("Consumer Number", consumerNumber);
@@ -1041,88 +1108,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
-// Add this method to MainActivity.java - Application Form specific data merging
-public Map<String, Object> mergeSERVERDataForApplication(Map<String, Object> map) {
-    Map<String, Object> result = new HashMap<>();
-    try {
-        Map<String, String> customerInfo = new HashMap<>();
-        Map<String, String> balanceInfo = new HashMap<>();
-        
-        // Copy basic info needed for application form
-        if (map.containsKey("meter_number")) {
-            result.put("meter_number", map.get("meter_number"));
-        }
-        if (map.containsKey("consumer_number")) {
-            result.put("consumer_number", map.get("consumer_number"));
-        }
-        if (map.containsKey("customer_number")) {
-            result.put("customer_number", map.get("customer_number"));
-        }
-        
-        // Process SERVER1 data for application form
-        if (map.containsKey("SERVER1_data")) {
-            Map<String, Object> cleanedServer1 = cleanSERVER1Data(map.get("SERVER1_data"));
-            if (cleanedServer1.containsKey("customer_info")) {
-                customerInfo.putAll((Map<String, String>) cleanedServer1.get("customer_info"));
-            }
-        }
-        
-        // Process SERVER2 data for application form
-        if (map.containsKey("SERVER2_data") && map.get("SERVER2_data") instanceof JSONObject) {
-            Map<String, Object> cleanedServer2 = cleanSERVER2Data((JSONObject) map.get("SERVER2_data"));
-            if (cleanedServer2.containsKey("customer_info")) {
-                customerInfo.putAll((Map<String, String>) cleanedServer2.get("customer_info"));
-            }
-            if (cleanedServer2.containsKey("balance_info")) {
-                balanceInfo.putAll((Map<String, String>) cleanedServer2.get("balance_info"));
-            }
-        }
-        
-        // Process SERVER3 data for application form
-        if (map.containsKey("SERVER3_data") && map.get("SERVER3_data") instanceof JSONObject) {
-            Map<String, Object> cleanedServer3 = cleanSERVER3Data((JSONObject) map.get("SERVER3_data"));
-            if (cleanedServer3.containsKey("customer_info")) {
-                customerInfo.putAll((Map<String, String>) cleanedServer3.get("customer_info"));
-            }
-            if (cleanedServer3.containsKey("balance_info") && balanceInfo.isEmpty()) {
-                balanceInfo.putAll((Map<String, String>) cleanedServer3.get("balance_info"));
-            }
-        }
-        
-        // For application form, we need specific fields formatted nicely
-        if (!customerInfo.isEmpty()) {
-            // Ensure we have the essential fields for application form
-            Map<String, String> appCustomerInfo = new HashMap<>();
-            
-            // Map fields to application form requirements
-            appCustomerInfo.put("name", customerInfo.getOrDefault("Customer Name", 
-                                customerInfo.getOrDefault("Name", "N/A")));
-            appCustomerInfo.put("address", customerInfo.getOrDefault("Address", 
-                                customerInfo.getOrDefault("Customer Address", "N/A")));
-            appCustomerInfo.put("meter_no", customerInfo.getOrDefault("Meter Number", 
-                                customerInfo.getOrDefault("meter_number", "N/A")));
-            appCustomerInfo.put("consumer_no", customerInfo.getOrDefault("Consumer Number", 
-                                customerInfo.getOrDefault("customer_number", "N/A")));
-            appCustomerInfo.put("tariff", customerInfo.getOrDefault("Tariff", 
-                                customerInfo.getOrDefault("Tariff Description", "N/A")));
-            appCustomerInfo.put("sanction_load", customerInfo.getOrDefault("Sanctioned Load", "N/A"));
-            
-            result.put("customer_info", appCustomerInfo);
-        }
-        
-        if (!balanceInfo.isEmpty()) {
-            result.put("balance_info", balanceInfo);
-        }
-        
-        // Add timestamp for application
-        result.put("application_timestamp", new Date().toString());
-        
-    } catch (Exception e) {
-        Log.e(TAG, "Error in mergeSERVERDataForApplication: " + e.getMessage());
-        result.put("error", "Data processing error: " + e.getMessage());
-    }
-    return result;
-}
 
     // PERMISSION METHODS
     private void checkStoragePermission() {
