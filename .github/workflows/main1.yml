@@ -1,43 +1,78 @@
-name: Debug Project Structure
+name: Android CI
 
 on:
   push:
     branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
-  debug:
+  build:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Analyze repository structure
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Fix gradlew permissions and verify
+      working-directory: "./Meter Info"
       run: |
-        echo "=== ROOT DIRECTORY ==="
-        ls -la
+        echo "=== Current gradlew permissions ==="
+        ls -la gradlew
         
-        echo ""
-        echo "=== METER INFO FOLDER ==="
-        if [ -d "Meter Info" ]; then
-          ls -la "Meter Info/"
-          
-          echo ""
-          echo "=== GRADLE FILES CHECK ==="
-          echo "gradlew exists: $([ -f "Meter Info/gradlew" ] && echo "YES" || echo "NO")"
-          echo "settings.gradle exists: $([ -f "Meter Info/settings.gradle" ] && echo "YES" || echo "NO")"
-          echo "build.gradle exists: $([ -f "Meter Info/build.gradle" ] && echo "YES" || echo "NO")"
-          echo "app/build.gradle exists: $([ -f "Meter Info/app/build.gradle" ] && echo "YES" || echo "NO")"
-          
-          echo ""
-          echo "=== FIND ALL GRADLE FILES ==="
-          find "Meter Info" -name "*.gradle*" -type f | sort || echo "No gradle files found"
-          
-          echo ""
-          echo "=== FIND ALL FILES AND FOLDERS ==="
-          find "Meter Info" -type f -name "*" | head -20 | sort
-        else
-          echo "❌ 'Meter Info' folder not found!"
-          echo "Available folders:"
-          find . -maxdepth 2 -type d | sort
-        fi
+        echo "=== Making gradlew executable ==="
+        chmod +x gradlew
+        
+        echo "=== New gradlew permissions ==="
+        ls -la gradlew
+        
+        echo "=== Verify gradlew can run ==="
+        ./gradlew --version || echo "Gradlew verification failed"
+
+    - name: Build Debug APK
+      working-directory: "./Meter Info"
+      run: |
+        echo "=== Building Debug APK ==="
+        ./gradlew assembleDebug
+        
+        echo "=== APK Files Created ==="
+        ls -la app/build/outputs/apk/debug/ || echo "No APK files found"
+
+    - name: Build Release APK
+      working-directory: "./Meter Info"
+      run: |
+        echo "=== Building Release APK ==="
+        ./gradlew assembleRelease
+        
+        echo "=== Release APK Files ==="
+        ls -la app/build/outputs/apk/release/ || echo "No release APK files found"
+
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug
+        path: "Meter Info/app/build/outputs/apk/debug/*.apk"
+        retention-days: 7
+
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release
+        path: "Meter Info/app/build/outputs/apk/release/*.apk"
+        retention-days: 7
+
+    - name: Final verification
+      run: |
+        echo "=== All APK files in repository ==="
+        find . -name "*.apk" -type f | while read file; do
+          echo "📱 Found: $file ($(du -h "$file" | cut -f1))"
+        done || echo "No APK files found"
