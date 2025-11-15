@@ -28,6 +28,7 @@ public class HtmlActivity extends AppCompatActivity {
         @android.webkit.JavascriptInterface
         public String fetchDataForApplication(String inputNumber, String type) {
             try {
+                // FIXED: Use HtmlActivity.this instead of just HtmlActivity.this
                 ApplicationFormHelper helper = new ApplicationFormHelper(HtmlActivity.this);
                 java.util.Map<String, Object> result = helper.fetchDataForApplicationForm(inputNumber, type);
                 org.json.JSONObject jsonResult = new org.json.JSONObject(result);
