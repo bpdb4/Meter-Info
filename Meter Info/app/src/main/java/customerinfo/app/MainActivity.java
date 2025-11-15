@@ -1041,6 +1041,88 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
+// Add this method to MainActivity.java - Application Form specific data merging
+public Map<String, Object> mergeSERVERDataForApplication(Map<String, Object> map) {
+    Map<String, Object> result = new HashMap<>();
+    try {
+        Map<String, String> customerInfo = new HashMap<>();
+        Map<String, String> balanceInfo = new HashMap<>();
+        
+        // Copy basic info needed for application form
+        if (map.containsKey("meter_number")) {
+            result.put("meter_number", map.get("meter_number"));
+        }
+        if (map.containsKey("consumer_number")) {
+            result.put("consumer_number", map.get("consumer_number"));
+        }
+        if (map.containsKey("customer_number")) {
+            result.put("customer_number", map.get("customer_number"));
+        }
+        
+        // Process SERVER1 data for application form
+        if (map.containsKey("SERVER1_data")) {
+            Map<String, Object> cleanedServer1 = cleanSERVER1Data(map.get("SERVER1_data"));
+            if (cleanedServer1.containsKey("customer_info")) {
+                customerInfo.putAll((Map<String, String>) cleanedServer1.get("customer_info"));
+            }
+        }
+        
+        // Process SERVER2 data for application form
+        if (map.containsKey("SERVER2_data") && map.get("SERVER2_data") instanceof JSONObject) {
+            Map<String, Object> cleanedServer2 = cleanSERVER2Data((JSONObject) map.get("SERVER2_data"));
+            if (cleanedServer2.containsKey("customer_info")) {
+                customerInfo.putAll((Map<String, String>) cleanedServer2.get("customer_info"));
+            }
+            if (cleanedServer2.containsKey("balance_info")) {
+                balanceInfo.putAll((Map<String, String>) cleanedServer2.get("balance_info"));
+            }
+        }
+        
+        // Process SERVER3 data for application form
+        if (map.containsKey("SERVER3_data") && map.get("SERVER3_data") instanceof JSONObject) {
+            Map<String, Object> cleanedServer3 = cleanSERVER3Data((JSONObject) map.get("SERVER3_data"));
+            if (cleanedServer3.containsKey("customer_info")) {
+                customerInfo.putAll((Map<String, String>) cleanedServer3.get("customer_info"));
+            }
+            if (cleanedServer3.containsKey("balance_info") && balanceInfo.isEmpty()) {
+                balanceInfo.putAll((Map<String, String>) cleanedServer3.get("balance_info"));
+            }
+        }
+        
+        // For application form, we need specific fields formatted nicely
+        if (!customerInfo.isEmpty()) {
+            // Ensure we have the essential fields for application form
+            Map<String, String> appCustomerInfo = new HashMap<>();
+            
+            // Map fields to application form requirements
+            appCustomerInfo.put("name", customerInfo.getOrDefault("Customer Name", 
+                                customerInfo.getOrDefault("Name", "N/A")));
+            appCustomerInfo.put("address", customerInfo.getOrDefault("Address", 
+                                customerInfo.getOrDefault("Customer Address", "N/A")));
+            appCustomerInfo.put("meter_no", customerInfo.getOrDefault("Meter Number", 
+                                customerInfo.getOrDefault("meter_number", "N/A")));
+            appCustomerInfo.put("consumer_no", customerInfo.getOrDefault("Consumer Number", 
+                                customerInfo.getOrDefault("customer_number", "N/A")));
+            appCustomerInfo.put("tariff", customerInfo.getOrDefault("Tariff", 
+                                customerInfo.getOrDefault("Tariff Description", "N/A")));
+            appCustomerInfo.put("sanction_load", customerInfo.getOrDefault("Sanctioned Load", "N/A"));
+            
+            result.put("customer_info", appCustomerInfo);
+        }
+        
+        if (!balanceInfo.isEmpty()) {
+            result.put("balance_info", balanceInfo);
+        }
+        
+        // Add timestamp for application
+        result.put("application_timestamp", new Date().toString());
+        
+    } catch (Exception e) {
+        Log.e(TAG, "Error in mergeSERVERDataForApplication: " + e.getMessage());
+        result.put("error", "Data processing error: " + e.getMessage());
+    }
+    return result;
+}
 
     // PERMISSION METHODS
     private void checkStoragePermission() {
