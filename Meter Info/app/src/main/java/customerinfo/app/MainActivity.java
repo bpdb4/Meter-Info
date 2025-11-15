@@ -343,6 +343,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+private void openApplicationForm() {
+    setContentView(R.layout.application_form);
+
+    WebView webView = findViewById(R.id.webView);
+    webView.getSettings().setJavaScriptEnabled(true);
+    webView.setWebViewClient(new WebViewClient());
+
+    webView.loadUrl("file:///android_asset/application_form.html");
+}
+
     // API METHODS
     public static Map<String, Object> getCustomerNumbersByMeter(String meterNumber) {
         Map<String, Object> result = new HashMap<>();
