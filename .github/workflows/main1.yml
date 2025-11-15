@@ -1,68 +1,43 @@
-name: Android CI
+name: Debug Project Structure
 
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
 
 jobs:
-  build:
+  debug:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Debug project structure
+    - name: Analyze repository structure
       run: |
-        echo "=== Current Directory Structure ==="
-        pwd
+        echo "=== ROOT DIRECTORY ==="
         ls -la
         
-        echo "=== Meter Info Folder Contents ==="
+        echo ""
+        echo "=== METER INFO FOLDER ==="
         if [ -d "Meter Info" ]; then
           ls -la "Meter Info/"
-          echo "=== Checking for gradlew ==="
-          if [ -f "Meter Info/gradlew" ]; then
-            echo "✅ gradlew file exists"
-            ls -la "Meter Info/gradlew"
-          else
-            echo "❌ gradlew file NOT found in Meter Info/"
-            echo "Looking for gradlew in subdirectories:"
-            find "Meter Info" -name "gradlew" -type f 2>/dev/null || echo "No gradlew found anywhere"
-          fi
+          
+          echo ""
+          echo "=== GRADLE FILES CHECK ==="
+          echo "gradlew exists: $([ -f "Meter Info/gradlew" ] && echo "YES" || echo "NO")"
+          echo "settings.gradle exists: $([ -f "Meter Info/settings.gradle" ] && echo "YES" || echo "NO")"
+          echo "build.gradle exists: $([ -f "Meter Info/build.gradle" ] && echo "YES" || echo "NO")"
+          echo "app/build.gradle exists: $([ -f "Meter Info/app/build.gradle" ] && echo "YES" || echo "NO")"
+          
+          echo ""
+          echo "=== FIND ALL GRADLE FILES ==="
+          find "Meter Info" -name "*.gradle*" -type f | sort || echo "No gradle files found"
+          
+          echo ""
+          echo "=== FIND ALL FILES AND FOLDERS ==="
+          find "Meter Info" -type f -name "*" | head -20 | sort
         else
           echo "❌ 'Meter Info' folder not found!"
           echo "Available folders:"
           find . -maxdepth 2 -type d | sort
         fi
-
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
-
-    - name: Build APK (if gradlew exists)
-      working-directory: "./Meter Info"
-      run: |
-        if [ -f "./gradlew" ]; then
-          chmod +x ./gradlew
-          ./gradlew assembleDebug
-          ls -la app/build/outputs/apk/debug/
-        else
-          echo "❌ gradlew not found. Cannot build."
-          exit 1
-        fi
-
-    - name: Upload APK artifact
-      if: success()
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-debug
-        path: "Meter Info/app/build/outputs/apk/debug/*.apk"
-        retention-days: 7
