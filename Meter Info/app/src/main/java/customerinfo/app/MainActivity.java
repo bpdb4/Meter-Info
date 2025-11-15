@@ -839,42 +839,111 @@ public class MainActivity extends AppCompatActivity {
     private void shareExcelFile(String filePath) {
         Toast.makeText(this, "Excel file saved: " + filePath, Toast.LENGTH_LONG).show();
     }
-
-    // APPLICATION FORM METHODS
-    private void openApplicationForm() {
-        try {
-            WebView applicationWebView = new WebView(this);
-            // WebView setup code here...
+private void openApplicationForm() {
+    try {
+        WebView applicationWebView = new WebView(this);
+        
+        // Configure WebView settings
+        WebSettings webSettings = applicationWebView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
+        webSettings.setDomStorageEnabled(true);
+        webSettings.setAllowFileAccess(true);
+        webSettings.setBuiltInZoomControls(true);
+        webSettings.setDisplayZoomControls(false);
+        
+        applicationFormHelper = new ApplicationFormHelper(this, applicationWebView);
+        applicationWebView.addJavascriptInterface(applicationFormHelper, "AndroidInterface");
+        
+        applicationWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                Log.d("ApplicationForm", "Page finished loading: " + url);
+                // Auto-focus and show keyboard after page loads
+                showKeyboardForWebView(applicationWebView);
+            }
             
-            applicationFormHelper = new ApplicationFormHelper(this, applicationWebView);
-            
-            // Show dialog with WebView
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("আবেদনপত্র");
-            builder.setView(applicationWebView);
-            builder.setPositiveButton("প্রিন্ট", (dialog, which) -> {
-                try {
-                    applicationWebView.evaluateJavascript("window.print();", null);
-                } catch (Exception e) {
-                    Log.e("ApplicationForm", "Print error: " + e.getMessage());
+            @Override
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                super.onReceivedError(view, errorCode, description, failingUrl);
+                Log.e("ApplicationForm", "WebView error: " + description);
+                if (applicationFormHelper != null) {
+                    applicationFormHelper.hideLoading();
                 }
-            });
-            builder.setNegativeButton("বন্ধ", (dialog, which) -> {
-                dialog.dismiss();
-                showStartupScreen();
-            });
-            
-            AlertDialog dialog = builder.create();
-            dialog.show();
-            
-            // Load the HTML form
-            applicationWebView.loadUrl("file:///android_asset/application_form.html");
-            
-        } catch (Exception e) {
-            Toast.makeText(this, "Error opening application form", Toast.LENGTH_SHORT).show();
+            }
+        });
+        
+        // Show dialog with WebView
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("আবেদনপত্র");
+        builder.setView(applicationWebView);
+        builder.setPositiveButton("প্রিন্ট", (dialog, which) -> {
+            try {
+                applicationWebView.evaluateJavascript("window.print();", null);
+            } catch (Exception e) {
+                Log.e("ApplicationForm", "Print error: " + e.getMessage());
+            }
+        });
+        builder.setNegativeButton("বন্ধ", (dialog, which) -> {
+            dialog.dismiss();
             showStartupScreen();
+        });
+        
+        AlertDialog dialog = builder.create();
+        
+        // Set dialog show listener to focus on input
+        dialog.setOnShowListener(dialogInterface -> {
+            Log.d("ApplicationForm", "Dialog shown");
+            showKeyboardForWebView(applicationWebView);
+        });
+        
+        dialog.setOnCancelListener(d -> {
+            Log.d("ApplicationForm", "Dialog cancelled");
+            showStartupScreen();
+        });
+        
+        dialog.show();
+        
+        // Load the HTML form
+        try {
+            applicationWebView.loadUrl("file:///android_asset/application_form.html");
+            Log.d("ApplicationForm", "Loading HTML from assets");
+        } catch (Exception e) {
+            Log.e("ApplicationForm", "Error loading HTML: " + e.getMessage());
+            if (applicationFormHelper != null) {
+                applicationFormHelper.showError("Failed to load application form: " + e.getMessage());
+            }
         }
+        
+    } catch (Exception e) {
+        Log.e("ApplicationForm", "Error opening application form: " + e.getMessage());
+        Toast.makeText(this, "Error opening application form", Toast.LENGTH_SHORT).show();
+        showStartupScreen();
     }
+}
+
+// Add this method to show keyboard for WebView
+private void showKeyboardForWebView(final WebView webView) {
+    if (webView != null) {
+        webView.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // Focus on the search input and show keyboard
+                    webView.evaluateJavascript("javascript:document.getElementById('searchInput').focus();", null);
+                    webView.requestFocus();
+                    
+                    InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                        imm.showSoftInput(webView, InputMethodManager.SHOW_IMPLICIT);
+                    }
+                } catch (Exception e) {
+                    Log.e("Keyboard", "Error showing keyboard: " + e.getMessage());
+                }
+            }
+        }, 1000); // Delay to ensure WebView is fully loaded
+    }
+}
 
     public void fetchDataForApplicationForm(String inputNumber, String billType) {
         this.selectedType = billType;
