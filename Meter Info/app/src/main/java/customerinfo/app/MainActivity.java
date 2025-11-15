@@ -343,15 +343,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-private void openApplicationForm() {
-    setContentView(R.layout.application_form);
 
-    WebView webView = findViewById(R.id.webView);
-    webView.getSettings().setJavaScriptEnabled(true);
-    webView.setWebViewClient(new WebViewClient());
-
-    webView.loadUrl("file:///android_asset/application_form.html");
-}
 
     // API METHODS
     public static Map<String, Object> getCustomerNumbersByMeter(String meterNumber) {
@@ -994,86 +986,92 @@ private void openApplicationForm() {
         Toast.makeText(this, "Excel file saved: " + filePath, Toast.LENGTH_LONG).show();
     }
 
-    // APPLICATION FORM METHODS
-    private void openApplicationForm() {
-        try {
-            WebView applicationWebView = new WebView(this);
-            
-            // Configure WebView settings
-            WebSettings webSettings = applicationWebView.getSettings();
-            webSettings.setJavaScriptEnabled(true);
-            webSettings.setDomStorageEnabled(true);
-            webSettings.setAllowFileAccess(true);
-            webSettings.setBuiltInZoomControls(true);
-            webSettings.setDisplayZoomControls(false);
-            
-            applicationFormHelper = new ApplicationFormHelper(this, applicationWebView);
-            applicationWebView.addJavascriptInterface(applicationFormHelper, "AndroidInterface");
-            
-            applicationWebView.setWebViewClient(new WebViewClient() {
-                @Override
-                public void onPageFinished(WebView view, String url) {
-                    super.onPageFinished(view, url);
-                    Log.d("ApplicationForm", "Page finished loading: " + url);
-                    showKeyboardForWebView(applicationWebView);
-                }
-                
-                @Override
-                public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-                    super.onReceivedError(view, errorCode, description, failingUrl);
-                    Log.e("ApplicationForm", "WebView error: " + description);
-                    if (applicationFormHelper != null) {
-                        applicationFormHelper.hideLoading();
-                    }
-                }
-            });
-            
-            // Show dialog with WebView
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("আবেদনপত্র");
-            builder.setView(applicationWebView);
-            builder.setPositiveButton("প্রিন্ট", (dialog, which) -> {
-                try {
-                    applicationWebView.evaluateJavascript("window.print();", null);
-                } catch (Exception e) {
-                    Log.e("ApplicationForm", "Print error: " + e.getMessage());
-                }
-            });
-            builder.setNegativeButton("বন্ধ", (dialog, which) -> {
-                dialog.dismiss();
-                showStartupScreen();
-            });
-            
-            AlertDialog dialog = builder.create();
-            dialog.setOnShowListener(dialogInterface -> {
-                Log.d("ApplicationForm", "Dialog shown");
+   private void openApplicationForm() {
+    try {
+        Log.d("ApplicationForm", "Opening application form...");
+
+        // Create helper instance
+        applicationFormHelper = new ApplicationFormHelper(this);
+
+        // Create WebView
+        WebView applicationWebView = new WebView(this);
+        applicationWebView.getSettings().setJavaScriptEnabled(true);
+        applicationWebView.getSettings().setDomStorageEnabled(true);
+        applicationWebView.getSettings().setLoadWithOverviewMode(true);
+        applicationWebView.getSettings().setUseWideViewPort(true);
+        applicationWebView.setVerticalScrollBarEnabled(true);
+        applicationWebView.setHorizontalScrollBarEnabled(true);
+
+        // WebView client
+        applicationWebView.setWebViewClient(new WebViewClient() {
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                Log.d("ApplicationForm", "Page loaded: " + url);
                 showKeyboardForWebView(applicationWebView);
-            });
-            
-            dialog.setOnCancelListener(d -> {
-                Log.d("ApplicationForm", "Dialog cancelled");
-                showStartupScreen();
-            });
-            
-            dialog.show();
-            
-            // Load the HTML form
-            try {
-                applicationWebView.loadUrl("file:///android_asset/application_form.html");
-                Log.d("ApplicationForm", "Loading HTML from assets");
-            } catch (Exception e) {
-                Log.e("ApplicationForm", "Error loading HTML: " + e.getMessage());
+            }
+
+            @Override
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                super.onReceivedError(view, errorCode, description, failingUrl);
+                Log.e("ApplicationForm", "WebView error: " + description);
+
                 if (applicationFormHelper != null) {
-                    applicationFormHelper.showError("Failed to load application form: " + e.getMessage());
+                    applicationFormHelper.hideLoading();
                 }
             }
-            
-        } catch (Exception e) {
-            Log.e("ApplicationForm", "Error opening application form: " + e.getMessage());
-            Toast.makeText(this, "Error opening application form", Toast.LENGTH_SHORT).show();
+        });
+
+        // Create Dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("আবেদনপত্র");
+        builder.setView(applicationWebView);
+
+        builder.setPositiveButton("প্রিন্ট", (dialog, which) -> {
+            try {
+                applicationWebView.evaluateJavascript("window.print();", null);
+            } catch (Exception e) {
+                Log.e("ApplicationForm", "Print error: " + e.getMessage());
+            }
+        });
+
+        builder.setNegativeButton("বন্ধ", (dialog, which) -> {
+            dialog.dismiss();
             showStartupScreen();
+        });
+
+        AlertDialog dialog = builder.create();
+
+        dialog.setOnShowListener(dlg -> {
+            Log.d("ApplicationForm", "Dialog shown");
+            showKeyboardForWebView(applicationWebView);
+        });
+
+        dialog.setOnCancelListener(d -> {
+            Log.d("ApplicationForm", "Dialog cancelled");
+            showStartupScreen();
+        });
+
+        dialog.show();
+
+        // Load HTML
+        try {
+            Log.d("ApplicationForm", "Loading HTML from assets...");
+            applicationWebView.loadUrl("file:///android_asset/application_form.html");
+        } catch (Exception e) {
+            Log.e("ApplicationForm", "Error loading HTML: " + e.getMessage());
+            if (applicationFormHelper != null) {
+                applicationFormHelper.showError("Failed to load application form: " + e.getMessage());
+            }
         }
+
+    } catch (Exception e) {
+        Log.e("ApplicationForm", "openApplicationForm error: " + e.getMessage());
+        Toast.makeText(this, "Error opening application form", Toast.LENGTH_SHORT).show();
+        showStartupScreen();
     }
+}
 
     private void showKeyboardForWebView(final WebView webView) {
         if (webView != null) {
