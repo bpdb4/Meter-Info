@@ -486,12 +486,3 @@ public class ApplicationFormHelper {
                !trimmed.equals("0");
     }
 }
-function saveAsPDF() {
-    if (window.AndroidInterface && AndroidInterface.saveAsPDF) {
-        AndroidInterface.saveAsPDF();
-    } else {
-        // Fallback to print on mobile
-        alert('PDF সেভ করার জন্য প্রিন্ট অপশন ব্যবহার করুন');
-        window.print();
-    }
-}
