@@ -4,328 +4,183 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>আবেদনপত্র</title>
+
     <style>
-        /* Base Reset */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* Global Styles */
-        body {
-            font-family: 'Arial', 'Noto Sans Bengali', sans-serif; /* Added Bengali font support */
-            line-height: 1.6;
-            padding: 20px 10px;
-            background: #e9ecef; /* Lighter, modern background */
-        }
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    padding: 20px;
+    background: #f0f2f5;
+}
 
-        .application-container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
+/* A4 Print Optimization */
+@page {
+    size: A4;
+    margin: 15mm;
+}
 
-        /* --- Search Section Styles --- */
-        .search-section {
-            background: #f8f9fa;
-            padding: 25px;
-            border-bottom: 1px solid #dee2e6;
-        }
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+        background: white;
+        /* A4 paper width simulation */
+        width: 210mm; 
+        min-height: 297mm;
+    }
+    .search-section, .action-buttons, .debug-info {
+        display: none !important;
+    }
+    .application-container {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        padding: 0 15mm !important; /* Apply margin from @page to content */
+    }
+    .form-section { 
+        display: block !important; 
+        padding: 0;
+    }
+    /* Ensure the header text is centered in print */
+    .header h1 {
+        text-align: center !important;
+    }
+    .header p {
+        text-align: left !important;
+    }
+    .signature {
+        margin-top: 50px; /* Space for signature */
+        text-align: right;
+    }
+}
 
-        .search-section h2 {
-            color: #343a40;
-            margin-bottom: 20px;
-            text-align: center;
-        }
+/* Main container */
+.application-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+}
 
-        /* Toggle Switch for Type Selection */
-        .type-selector {
-            display: flex;
-            background: #e9ecef;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            padding: 5px;
-        }
+/* SEARCH BOX SECTION */
+.search-section {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+}
 
-        .type-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            background: transparent;
-            cursor: pointer;
-            text-align: center;
-            font-weight: 600;
-            color: #495057;
-            transition: background 0.3s, color 0.3s;
-        }
+.type-selector { display: flex; gap: 10px; margin-bottom: 15px; }
+.type-btn {
+    flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px;
+    background: white; cursor: pointer; text-align: center; transition: 0.25s;
+}
+.type-btn.active { background: #007bff; color: white; border-color: #007bff; }
 
-        .type-btn.active {
-            background: #007bff;
-            color: white;
-            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
-        }
+.search-row { display: flex; gap: 10px; align-items: center; }
+.search-input {
+    flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px;
+}
+.search-btn {
+    background: #007bff; color: white; border: none;
+    padding: 12px 20px; border-radius: 6px; cursor: pointer;
+}
+.search-btn:disabled { background: #6c757d; }
 
-        /* Input and Button Group */
-        .search-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
+.loading { display: none; color: #007bff; text-align: center; padding: 10px; }
+.error {
+    display: none; color: #dc3545; background: #f8d7da;
+    border: 1px solid #f5c6cb; border-radius: 6px; padding: 10px; margin-top: 10px;
+}
 
-        .input-group {
-            position: relative;
-            flex-grow: 1;
-        }
+.debug-info {
+    background: #fafafa; border: 1px solid #ddd; border-radius: 6px;
+    padding: 10px; margin-top: 10px; font-size: 12px; color: #6c757d;
+    max-height: 150px; overflow-y: auto;
+}
 
-        .search-input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            font-size: 16px;
-            padding-right: 50px; /* Space for clear button */
-        }
+/* HEADER — modern layout */
+.header {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #007bff;
+}
 
-        .clear-input-btn {
-            position: absolute;
-            right: 55px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #6c757d;
-            cursor: pointer;
-            font-size: 18px;
-            line-height: 1;
-            display: none;
-            z-index: 10;
-        }
-        
-        .search-btn {
-            background: #28a745; /* Success Green */
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
+/* Center title only */
+.header h1 {
+    text-align: center !important;
+    font-size: 30px;
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
 
-        .search-btn:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-        }
+/* Left-align office block */
+.header p {
+    text-align: left !important;
+    font-size: 18px;
+    line-height: 1.4;
+    color: #444;
+}
 
-        .loading {
-            display: none;
-            color: #007bff;
-            text-align: center;
-            padding: 10px;
-            margin-top: 10px;
-        }
+/* FORM TABLE */
+.form-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    font-size: 17px;
+}
+.form-table td {
+    padding: 12px; border: 1px solid #ddd; vertical-align: top;
+}
+.form-table td:first-child {
+    font-weight: bold; width: 32%; background: #f8f9fa;
+}
 
-        .error {
-            display: none;
-            color: white;
-            background: #dc3545;
-            border-radius: 4px;
-            padding: 10px;
-            margin-top: 10px;
-            text-align: center;
-            font-weight: 600;
-        }
-        
-        /* Debug Info - Hidden by default in production UI */
-        .debug-info {
-            display: none; 
-            background: #fff3cd; 
-            border: 1px solid #ffc107;
-            border-radius: 4px;
-            padding: 10px;
-            margin-bottom: 15px;
-            font-size: 12px;
-            color: #856404;
-            max-height: 100px;
-            overflow-y: auto;
-        }
+/* RECHARGE TABLE */
+.recharge-section { margin-top: 30px; }
+.recharge-table { width: 100%; border-collapse: collapse; }
+.recharge-table th, .recharge-table td {
+    padding: 10px; border: 1px solid #ccc; text-align: center;
+}
+.recharge-table th { background: #007bff; color: white; }
+.recharge-table tr:nth-child(even) { background: #f8f9fa; }
 
-        /* --- Form Section Styles --- */
-        .form-section {
-            display: none;
-            padding: 25px;
-        }
+/* NOTES section */
+.notes { margin-top: 30px; padding: 10px; font-size: 17px; }
+.notes strong { display: block; margin-bottom: 10px; }
 
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+/* SIGNATURE */
+.signature {
+    margin-top: 40px; text-align: right; padding: 20px;
+}
+.sig-line {
+    border-top: 1px solid #000; width: 220px; margin-left: auto; padding-top: 5px;
+}
 
-        .header h1 {
-            color: #007bff;
-            margin-bottom: 5px;
-            font-size: 28px;
-        }
-
-        .header p {
-            color: #495057;
-            line-height: 1.4;
-            margin-top: 10px;
-        }
-
-        /* Data Cards/Table */
-        .form-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-            font-size: 15px;
-        }
-
-        .form-table td {
-            padding: 15px 12px;
-            border: 1px solid #e9ecef;
-            vertical-align: middle;
-        }
-
-        .form-table tr:nth-child(odd) td {
-            background: #f8f9fa;
-        }
-
-        .form-table td:first-child {
-            font-weight: 600;
-            width: 35%;
-            color: #007bff; /* Highlight label color */
-        }
-
-        .form-table td:last-child {
-            background: white;
-            font-weight: normal;
-        }
-
-        /* Arrear Highlight */
-        .highlight-arrear {
-            color: #dc3545; /* Red for emphasis */
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .recharge-section {
-            margin-top: 30px;
-        }
-
-        .recharge-section h3 {
-            color: #343a40;
-            margin-bottom: 15px;
-            text-align: center;
-            border-bottom: 2px solid #ced4da;
-            padding-bottom: 5px;
-        }
-
-        .recharge-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-
-        .recharge-table th,
-        .recharge-table td {
-            padding: 10px;
-            border: 1px solid #dee2e6;
-            text-align: center;
-        }
-
-        .recharge-table th {
-            background: #007bff;
-            color: white;
-        }
-
-        .recharge-table tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-
-        /* --- Action Buttons & Footer --- */
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
-        }
-
-        .btn {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
-
-        .btn-print {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-close {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-back {
-            background: #6c757d;
-            color: white;
-        }
-
-        /* Print Optimization */
-        @media print {
-            body {
-                background: white;
-                padding: 0;
-            }
-            .application-container {
-                box-shadow: none;
-                border-radius: 0;
-                max-width: none;
-            }
-            .search-section, .action-buttons, .debug-info {
-                display: none !important;
-            }
-            .form-section {
-                display: block !important;
-                padding: 20px 30px;
-            }
-            /* Add Print Footer/Signature Lines */
-            .print-footer {
-                display: block;
-                margin-top: 50px;
-                padding-top: 20px;
-                border-top: 1px dashed #aaa;
-                display: flex;
-                justify-content: space-between;
-                font-size: 14px;
-            }
-            .print-footer div {
-                text-align: center;
-                width: 45%;
-                border-top: 1px solid black;
-                padding-top: 5px;
-            }
-        }
-        .print-footer {
-            display: none; /* Hide in screen view */
-        }
+/* ACTION BUTTONS */
+.action-buttons {
+    display: flex; gap: 15px; justify-content: center;
+    margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;
+}
+.btn {
+    padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer;
+    font-size: 16px;
+}
+.btn-print { background: #28a745; color: white; }
+.btn-close { background: #dc3545; color: white; }
+.btn-back { background: #6c757d; color: white; }
     </style>
 </head>
+
 <body>
 <div class="application-container">
+
     <div class="search-section" id="searchSection">
         <h2>গ্রাহক তথ্য খুঁজুন</h2>
 
@@ -340,10 +195,8 @@
         </div>
 
         <div class="search-row">
-            <div class="input-group">
-                <input type="text" id="searchInput" class="search-input" placeholder="মিটার নং লিখুন" autofocus autocapitalize="none" autocorrect="off" inputmode="numeric">
-                <button class="clear-input-btn" id="clearInputBtn" onclick="clearInput()">✕</button>
-            </div>
+            <input type="text" id="searchInput" class="search-input" placeholder="মিটার নং বা গ্রাহক নং লিখুন"
+                   autofocus autocapitalize="none" autocorrect="off" inputmode="numeric">
             <button onclick="fetchData()" id="searchBtn" class="search-btn">খুঁজুন</button>
         </div>
 
@@ -352,344 +205,177 @@
     </div>
 
     <div class="form-section" id="formSection">
+
         <div class="header">
             <h1>আবেদনপত্র</h1>
-            <p>
-                নির্বাহী প্রকৌশলী<br>
-                বিক্রয় ও বিতরণ বিভাগ<br>
-                বিদ্যুৎ উন্নয়ন বোর্ড, সুনামগঞ্জ।
-            </p>
+            <p>নির্বাহী প্রকৌশলী<br>বিক্রয় ও বিতরণ বিভাগ<br>বিদ্যুৎ উন্নয়ন বোর্ড, সুনামগঞ্জ।</p>
         </div>
 
-        <div class="form-content">
-            <table class="form-table">
-                <tr>
-                    <td>গ্রাহকের নামঃ</td>
-                    <td id="customerName">-</td>
-                </tr>
-                <tr>
-                    <td>পিতার নামঃ</td>
-                    <td id="fatherName">-</td>
-                </tr>
-                <tr>
-                    <td>ঠিকানাঃ</td>
-                    <td id="address">-</td>
-                </tr>
-                <tr>
-                    <td>মোবাইল নংঃ</td>
-                    <td id="mobileNo">-</td>
-                </tr>
-                <tr>
-                    <td>মিটার নংঃ</td>
-                    <td id="meterNo">-</td>
-                </tr>
-                <tr>
-                    <td>গ্রাহক নংঃ</td>
-                    <td id="consumerNo">-</td>
-                </tr>
-                <tr>
-                    <td>বকেয়া বিলের টাকাঃ</td>
-                    <td id="arrear">কোনও বকেয়া নেই</td>
-                </tr>
+        <table class="form-table">
+            <tr><td>১। গ্রাহকের নামঃ</td><td id="customerName">-</td></tr>
+            <tr><td>পিতার নামঃ</td><td id="fatherName">-</td></tr>
+            <tr><td>ঠিকানাঃ</td><td id="address">-</td></tr>
+            <tr><td>মোবাইল নংঃ</td><td id="mobileNo">-</td></tr>
+            <tr><td>মিটার নংঃ</td><td id="meterNo">-</td></tr>
+            <tr><td>গ্রাহক নংঃ</td><td id="consumerNo">-</td></tr>
+            <tr><td>বকেয়া বিলের টাকাঃ</td><td id="arrear">কোনও বকেয়া নেই</td></tr>
+        </table>
+
+        <div class="recharge-section">
+            <h3>সর্বশেষ রিচার্জের তথ্য (প্রিপেইড)</h3>
+            <table class="recharge-table" id="rechargeTable">
+                <thead>
+                <tr><th>তারিখ</th><th>টাকার পরিমাণ</th></tr>
+                </thead>
+                <tbody>
+                <tr><td>-</td><td>-</td></tr>
+                <tr><td>-</td><td>-</td></tr>
+                <tr><td>-</td><td>-</td></tr>
+                <tr><td>-</td><td>-</td></tr>
+                </tbody>
             </table>
-
-            <div class="recharge-section" id="rechargeSection">
-                <h3>সর্বশেষ রিচার্জের তথ্য (প্রিপেইড)</h3>
-                <table class="recharge-table">
-                    <thead>
-                        <tr>
-                            <th>তারিখ</th>
-                            <th>টাকার পরিমাণ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="rechargeTableBody">
-                        </tbody>
-                </table>
-            </div>
         </div>
 
-        <div class="print-footer">
-            <div>বিতরণ কর্মকর্তা সাক্ষর</div>
-            <div>আবেদনকারীর সাক্ষর</div>
+        <section class="notes">
+            <strong>সম্ভাব্য অভিযোগ (যে সমস্যার জন্য আবেদন করা হচ্ছে তা চেক করুন):</strong>
+            <ol>
+                <li><input type="checkbox"> লোড ছাড়াও মিটারে টাকা কাটে / মিটারে টাকা কাটে না</li>
+                <li><input type="checkbox"> মিটারের টুইস্ট টাইপ সীল / লীড / প্যাডলক সীল ভাঙা / চুরি হয়েছে</li>
+                <li><input type="checkbox"> মিটার ভেঙে / হারিয়ে / পুড়ে গেছে</li>
+                <li><input type="checkbox"> মিটার স্থানান্তর / পরিবর্তন করতে আগ্রহী</li>
+                <li><input type="checkbox"> মিটারের ডিসপ্লেতে ডিজিট এলোমেলো</li>
+                <li><input type="checkbox"> মিটার সিটি / পিটি নষ্ট হয়েছে</li>
+                <li><input type="checkbox"> মিটার কার্ড হারিয়ে গেছে</li>
+                <li><input type="checkbox"> মিটারের বাটন কাজ করছে না</li>
+                <li><input type="checkbox"> টার্মিনাল কভার খুলে ফেলেছি / অন্য কেউ খুলেছে</li>
+                <li><input type="checkbox"> মিটারে আউটপুট নেই</li>
+                <li><input type="checkbox"> মিটারে তারিখ / সময় ঠিক নেই</li>
+                <li><input type="checkbox"> নাম পরিবর্তন করা প্রয়োজন</li>
+                <li><input type="checkbox"> লোড বৃদ্ধি করা প্রয়োজন</li>
+                <li><input type="checkbox"> ব্যাটারি সমস্যা / লো-ভোল্টেজ সমস্যা</li>
+                <li><input type="checkbox"> মিটারে কোনো পাওয়ার নেই</li>
+                <li><input type="checkbox"> অন্যান্য .....................................................................................</li>
+            </ol>
+        </section>
+
+        <div class="signature">
+            <div class="sig-line">আবেদনকারীর স্বাক্ষর</div>
         </div>
 
         <div class="action-buttons">
-            <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট করুন</button>
-            <button class="btn btn-close" onclick="closeForm()">✕ বন্ধ করুন</button>
+            <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
+            <button class="btn btn-close" onclick="closeForm()">✕ বন্ধ</button>
             <button class="btn btn-back" onclick="showSearchSection()">← নতুন খোঁজ</button>
         </div>
+
     </div>
 </div>
 
 <script>
-    let selectedType = 'prepaid';
-    const prepaidLength = 12; // Standard length for prepaid meter numbers
+/* ------- MODIFIED JS LOGIC ------- */
 
-    // --- Helper Functions ---
+let selectedType = 'prepaid';
+
+function debugLog(msg){
+    const d=document.getElementById("debugLog");
+    d.innerHTML+=msg+"<br>";
+    d.scrollTop=d.scrollHeight;
+}
+
+function selectType(t){
+    selectedType=t;
+    document.getElementById("prepaidBtn").classList.toggle("active",t==="prepaid");
+    document.getElementById("postpaidBtn").classList.toggle("active",t==="postpaid");
+}
+
+function fetchData(){
+    const input=document.getElementById("searchInput").value.trim();
+    if(!input){ showError("দয়া করে মিটার নং বা গ্রাহক নং লিখুন!"); return; }
+
+    showLoading();
+
+    if(window.AndroidInterface){
+        try{
+            // Assuming AndroidInterface.fetchDataForApplication returns the combined data object (Server 1 data + status for others)
+            const result=AndroidInterface.fetchDataForApplication(input,selectedType);
+            const data=JSON.parse(result);
+            fillFormWithData(data);
+        }catch(err){ showError("App error: "+err); }
+    } else {
+        showError("AndroidInterface not available");
+    }
+}
+
+function fillFormWithData(data){
+    hideLoading();
+    if(data.error){ showError(data.error); return; }
+
+    document.getElementById("customerName").textContent=data.customer_name||"-";
+    document.getElementById("fatherName").textContent=data.father_name||"-";
+    document.getElementById("address").textContent=data.address||"-";
+    document.getElementById("mobileNo").textContent=data.mobile_no||"-";
+    document.getElementById("meterNo").textContent=data.meter_no||"-";
+    document.getElementById("consumerNo").textContent=data.consumer_no||"-";
+
+    // ✅ Arrear Logic Change: Replaces "..........." with "কোনও বকেয়া নেই"
+    document.getElementById("arrear").textContent =
+        (data.arrear && data.arrear!=="0") ? data.arrear : "কোনও বকেয়া নেই";
     
-    function debugLog(message) {
-        console.log('🔍 DEBUG:', message);
-        const debugLogElement = document.getElementById('debugLog');
-        if (debugLogElement) {
-            const timestamp = new Date().toLocaleTimeString('bn-BD');
-            debugLogElement.innerHTML += `[${timestamp}] ${message}<br>`;
-            debugLogElement.scrollTop = debugLogElement.scrollHeight;
-        }
-    }
-
-    function formatCurrency(amount) {
-        // Core Logic: If amount is zero, null, or equivalent, show 'কোনও বকেয়া নেই'
-        if (!amount || amount === '0' || amount === 'N/A' || String(amount).trim() === '') {
-            return 'কোনও বকেয়া নেই';
-        }
-
-        // Clean and parse the number (removes potential currency signs)
-        const numericAmount = parseFloat(String(amount).replace(/[^0-9.]/g, ''));
-        
-        if (isNaN(numericAmount) || numericAmount === 0) {
-            return 'কোনও বকেয়া নেই';
-        }
-        
-        // Return formatted amount
-        return '৳' + numericAmount.toFixed(2);
-    }
+    // Recharge Table Filling Logic (No change)
+    const tbody=document.getElementById("rechargeTable").querySelector("tbody");
+    tbody.innerHTML="";
     
-    // --- UI/State Management ---
-
-    function showLoading() {
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('searchBtn').disabled = true;
-        document.getElementById('searchBtn').textContent = 'খুঁজছি...';
-        hideError();
-    }
-
-    function hideLoading() {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('searchBtn').disabled = false;
-        document.getElementById('searchBtn').textContent = 'খুঁজুন';
-    }
-
-    function showError(message) {
-        debugLog('Showing error: ' + message);
-        document.getElementById('error').textContent = message;
-        document.getElementById('error').style.display = 'block';
-        hideLoading();
-    }
-
-    function hideError() {
-        document.getElementById('error').style.display = 'none';
-    }
-
-    function showSearchSection() {
-        document.getElementById('searchSection').style.display = 'block';
-        document.getElementById('formSection').style.display = 'none';
-        clearForm();
-        hideError();
-        document.getElementById('searchInput').focus();
-    }
-
-    function closeForm() {
-        if (window.AndroidInterface) {
-            window.AndroidInterface.closeApplication();
-        } else {
-            debugLog('Cannot close: AndroidInterface not available');
-        }
-    }
+    let rechargeData = data.recharges || [];
+    let count = 0;
     
-    // --- Input & Type Logic ---
-    
-    function updateClearButton() {
-        const input = document.getElementById('searchInput').value.trim();
-        const clearBtn = document.getElementById('clearInputBtn');
-        clearBtn.style.display = input.length > 0 ? 'block' : 'none';
-    }
-
-    function clearInput() {
-        document.getElementById('searchInput').value = '';
-        updateClearButton();
-        document.getElementById('searchInput').focus();
-    }
-
-    function selectType(type) {
-        selectedType = type;
-        document.getElementById('prepaidBtn').classList.toggle('active', type === 'prepaid');
-        document.getElementById('postpaidBtn').classList.toggle('active', type === 'postpaid');
-
-        const input = document.getElementById('searchInput');
-        const rechargeSection = document.getElementById('rechargeSection');
-        
-        if (type === 'prepaid') {
-            input.placeholder = '১২ ডিজিটের মিটার নং লিখুন';
-            input.inputmode = 'numeric';
-            rechargeSection.style.display = 'block';
-        } else {
-            input.placeholder = 'গ্রাহক নং বা মিটার নং লিখুন';
-            input.inputmode = 'text';
-            rechargeSection.style.display = 'none';
-        }
-        
-        input.value = ''; // Clear input on type change
-        updateClearButton();
-        debugLog('Type selected: ' + type);
-    }
-
-    function validateInput(input) {
-        if (!input) {
-            showError('দয়া করে মিটার নং বা গ্রাহক নং লিখুন!');
-            return false;
-        }
-
-        if (selectedType === 'prepaid' && input.length !== prepaidLength) {
-            showError(`প্রিপেইড মিটারের জন্য অবশ্যই ${prepaidLength} ডিজিট লিখতে হবে।`);
-            return false;
-        }
-        
-        // Basic check for non-numeric characters in numeric mode
-        if (selectedType === 'prepaid' && !/^\d+$/.test(input)) {
-            showError('মিটার নং-এ শুধু সংখ্যা ব্যবহার করুন।');
-            return false;
-        }
-
-        return true;
-    }
-
-    // --- Data Fetching and Display ---
-    
-    function fetchData() {
-        const input = document.getElementById('searchInput').value.trim();
-        
-        if (!validateInput(input)) {
-            return;
-        }
-
-        showLoading();
-        debugLog('Attempting to fetch data for: ' + input + ', type: ' + selectedType);
-
-        if (window.AndroidInterface) {
-            try {
-                // Call Android method
-                const result = window.AndroidInterface.fetchDataForApplication(input, selectedType);
-                debugLog('Raw result received from Android: ' + result);
-                
-                if (result) {
-                    try {
-                        const data = JSON.parse(result);
-                        if (data.error || !data.customer_name) {
-                            showError(data.error || 'এই নম্বরের জন্য কোনো তথ্য পাওয়া যায়নি।');
-                        } else {
-                            fillFormWithData(data);
-                        }
-                    } catch (parseError) {
-                        showError('Data format error from app.');
-                        debugLog('Error parsing JSON: ' + parseError);
-                    }
-                } else {
-                    showError('অ্যাপ থেকে কোনো তথ্য পাওয়া যায়নি।');
-                }
-            } catch (callError) {
-                showError('App যোগাযোগে ত্রুটি: ' + callError);
-                debugLog('Error calling AndroidInterface: ' + callError);
-            }
-        } else {
-            showError('Android Interface খুঁজে পাওয়া যায়নি। (Development Mode)');
-            // Fallback for web testing (REMOVE IN PRODUCTION)
-            // setTimeout(() => fillFormWithData(testData), 1000); 
-        }
-        hideLoading();
-    }
-
-    function clearForm() {
-        document.getElementById('customerName').textContent = '-';
-        document.getElementById('fatherName').textContent = '-';
-        document.getElementById('address').textContent = '-';
-        document.getElementById('mobileNo').textContent = '-';
-        document.getElementById('meterNo').textContent = '-';
-        document.getElementById('consumerNo').textContent = '-';
-        
-        const arrearElement = document.getElementById('arrear');
-        arrearElement.textContent = 'কোনও বকেয়া নেই';
-        arrearElement.classList.remove('highlight-arrear');
-
-        document.getElementById('rechargeTableBody').innerHTML = '';
-        // Re-populate with empty rows
-        for (let i = 0; i < 4; i++) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = '<td>-</td><td>-</td>';
-            document.getElementById('rechargeTableBody').appendChild(tr);
-        }
-    }
-
-    // Function to be called from Android to fill form
-    function fillFormWithData(data) {
-        debugLog('Filling form...');
-        
-        // Fill the form fields
-        document.getElementById('customerName').textContent = data.customer_name || 'তথ্য নেই';
-        document.getElementById('fatherName').textContent = data.father_name || 'তথ্য নেই';
-        document.getElementById('address').textContent = data.address || 'তথ্য নেই';
-        document.getElementById('mobileNo').textContent = data.mobile_no || 'তথ্য নেই';
-        document.getElementById('meterNo').textContent = data.meter_no || 'তথ্য নেই';
-        document.getElementById('consumerNo').textContent = data.consumer_no || 'তথ্য নেই';
-
-        // Arrear Logic (with 'কোনও বকেয়া নেই' feature)
-        const arrearElement = document.getElementById('arrear');
-        const formattedArrear = formatCurrency(data.arrear);
-        
-        arrearElement.textContent = formattedArrear;
-        if (formattedArrear.startsWith('৳')) {
-            arrearElement.classList.add('highlight-arrear');
-        } else {
-            arrearElement.classList.remove('highlight-arrear');
-        }
-
-
-        // Fill recharge table (only if Prepaid is selected/relevant)
-        const tbody = document.getElementById('rechargeTableBody');
-        tbody.innerHTML = '';
-        let rechargeCount = 0;
-
-        if (data.recharges && data.recharges.length > 0) {
-            data.recharges.slice(0, 4).forEach(r => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${r.Date || '-'}</td><td>${formatCurrency(r.Amount) || '-'}</td>`;
-                tbody.appendChild(tr);
-                rechargeCount++;
-            });
-        }
-        
-        // Fill remaining rows up to 4 if less data was available
-        for (let i = rechargeCount; i < 4; i++) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = '<td>-</td><td>-</td>';
-            tbody.appendChild(tr);
-        }
-
-        // Show the form section
-        document.getElementById('searchSection').style.display = 'none';
-        document.getElementById('formSection').style.display = 'block';
-        debugLog('Form filled and displayed successfully');
-    }
-
-    // --- Initialization ---
-
-    document.addEventListener('DOMContentLoaded', function() {
-        debugLog('HTML page loaded');
-        selectType(selectedType); // Initialize UI state
-        
-        const input = document.getElementById('searchInput');
-        if (input) {
-            input.focus();
-            // Bind input change to update clear button visibility
-            input.addEventListener('input', updateClearButton);
-            
-            // Allow Enter key to search
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    fetchData();
-                }
-            });
-        }
+    rechargeData.slice(0, 4).forEach(r=>{
+        tbody.innerHTML+=`<tr><td>${r.Date||"-"}</td><td>${r.Amount||"-"}</td></tr>`;
+        count++;
     });
+    
+    // Fill remaining rows if less than 4 entries
+    for (let i = count; i < 4; i++) {
+        tbody.innerHTML += `<tr><td>-</td><td>-</td></tr>`;
+    }
+
+    document.getElementById("searchSection").style.display="none";
+    document.getElementById("formSection").style.display="block";
+}
+
+function showLoading(){
+    document.getElementById("loading").style.display="block";
+    document.getElementById("searchBtn").disabled=true;
+    document.getElementById("searchBtn").textContent="খুঁজছি...";
+}
+
+function hideLoading(){
+    document.getElementById("loading").style.display="none";
+    document.getElementById("searchBtn").disabled=false;
+    document.getElementById("searchBtn").textContent="খুঁজুন";
+}
+
+function showError(m){
+    document.getElementById("error").textContent=m;
+    document.getElementById("error").style.display="block";
+    hideLoading();
+}
+
+function hideError(){ document.getElementById("error").style.display="none"; }
+
+function showSearchSection(){
+    document.getElementById("formSection").style.display="none";
+    document.getElementById("searchSection").style.display="block";
+}
+
+function closeForm(){
+    if(window.AndroidInterface){ AndroidInterface.closeApplication(); }
+}
+
+// Initial state setup (if needed)
+document.addEventListener('DOMContentLoaded', () => {
+    selectType(selectedType);
+});
+
 </script>
 </body>
 </html>
