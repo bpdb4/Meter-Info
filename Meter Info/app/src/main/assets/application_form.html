@@ -4,167 +4,241 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>আবেদনপত্র</title>
-
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-body {
-    font-family: Arial, sans-serif;
-    line-height: 1.6;
-    padding: 20px;
-    background: #f0f2f5;
-}
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            background: #f5f5f5;
+        }
 
-/* A4 Print */
-@page {
-    size: A4;
-    margin: 15mm;
-}
+        .application-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
 
-@media print {
-    body {
-        margin: 0;
-        padding: 0;
-        background: white;
-    }
-    .search-section, .action-buttons, .debug-info {
-        display: none !important;
-    }
-    .application-container {
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        margin: 0 !important;
-        width: 100% !important;
-        padding: 0 !important;
-    }
-    .form-section { display: block !important; }
-}
+        .search-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
 
-/* Main container */
-.application-container {
-    max-width: 900px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 10px;
-    padding: 25px;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
-}
+        .type-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
 
-/* SEARCH BOX SECTION */
-.search-section {
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    border: 1px solid #dee2e6;
-}
+        .type-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
 
-.type-selector { display: flex; gap: 10px; margin-bottom: 15px; }
-.type-btn {
-    flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px;
-    background: white; cursor: pointer; text-align: center; transition: 0.25s;
-}
-.type-btn.active { background: #007bff; color: white; border-color: #007bff; }
+        .type-btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
 
-.search-row { display: flex; gap: 10px; align-items: center; }
-.search-input {
-    flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px;
-}
-.search-btn {
-    background: #007bff; color: white; border: none;
-    padding: 12px 20px; border-radius: 6px; cursor: pointer;
-}
-.search-btn:disabled { background: #6c757d; }
+        .search-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
 
-.loading { display: none; color: #007bff; text-align: center; padding: 10px; }
-.error {
-    display: none; color: #dc3545; background: #f8d7da;
-    border: 1px solid #f5c6cb; border-radius: 6px; padding: 10px; margin-top: 10px;
-}
+        .search-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
 
-.debug-info {
-    background: #fafafa; border: 1px solid #ddd; border-radius: 6px;
-    padding: 10px; margin-top: 10px; font-size: 12px; color: #6c757d;
-    max-height: 150px; overflow-y: auto;
-}
+        .search-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+        }
 
-/* HEADER — modern layout */
-.header {
-    margin-bottom: 25px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #007bff;
-}
+        .search-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
 
-/* Center title only */
-.header h1 {
-    text-align: center !important;
-    font-size: 30px;
-    color: #2c3e50;
-    margin-bottom: 15px;
-}
+        .loading {
+            display: none;
+            color: #007bff;
+            text-align: center;
+            padding: 10px;
+        }
 
-/* Left-align office block */
-.header p {
-    text-align: left !important;
-    font-size: 18px;
-    line-height: 1.4;
-    color: #444;
-}
+        .error {
+            display: none;
+            color: #dc3545;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+        }
 
-/* FORM TABLE */
-.form-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 30px;
-    font-size: 17px;
-}
-.form-table td {
-    padding: 12px; border: 1px solid #ddd; vertical-align: top;
-}
-.form-table td:first-child {
-    font-weight: bold; width: 32%; background: #f8f9fa;
-}
+        .form-section {
+            display: none;
+            padding: 20px;
+        }
 
-/* RECHARGE TABLE */
-.recharge-section { margin-top: 30px; }
-.recharge-table { width: 100%; border-collapse: collapse; }
-.recharge-table th, .recharge-table td {
-    padding: 10px; border: 1px solid #ccc; text-align: center;
-}
-.recharge-table th { background: #007bff; color: white; }
-.recharge-table tr:nth-child(even) { background: #f8f9fa; }
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #6c757d;
+            max-height: 150px;
+            overflow-y: auto;
+        }
 
-/* NOTES section */
-.notes { margin-top: 30px; padding: 10px; font-size: 17px; }
-.notes strong { display: block; margin-bottom: 10px; }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+        }
 
-/* SIGNATURE */
-.signature {
-    margin-top: 40px; text-align: right; padding: 20px;
-}
-.sig-line {
-    border-top: 1px solid #000; width: 220px; margin-left: auto; padding-top: 5px;
-}
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
 
-/* ACTION BUTTONS */
-.action-buttons {
-    display: flex; gap: 15px; justify-content: center;
-    margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;
-}
-.btn {
-    padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer;
-    font-size: 16px;
-}
-.btn-print { background: #28a745; color: white; }
-.btn-close { background: #dc3545; color: white; }
-.btn-back { background: #6c757d; color: white; }
+        .form-content {
+            margin: 20px 0;
+        }
+
+        .form-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            vertical-align: top;
+        }
+
+        .form-table td:first-child {
+            font-weight: bold;
+            width: 30%;
+            background: #f8f9fa;
+        }
+
+        .form-table td:last-child {
+            background: white;
+            min-height: 20px;
+        }
+
+        .recharge-section {
+            margin-top: 30px;
+        }
+
+        .recharge-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .recharge-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .recharge-table th,
+        .recharge-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .recharge-table th {
+            background: #007bff;
+            color: white;
+        }
+
+        .recharge-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-print {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-close {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-back {
+            background: #6c757d;
+            color: white;
+        }
+
+        @media print {
+            .search-section, .action-buttons, .debug-info {
+                display: none !important;
+            }
+            .form-section {
+                display: block !important;
+            }
+        }
     </style>
 </head>
-
 <body>
 <div class="application-container">
-
-    <!-- SEARCH SECTION -->
+    <!-- Search Section -->
     <div class="search-section" id="searchSection">
         <h2>গ্রাহক তথ্য খুঁজুন</h2>
 
@@ -179,8 +253,7 @@ body {
         </div>
 
         <div class="search-row">
-            <input type="text" id="searchInput" class="search-input" placeholder="মিটার নং বা গ্রাহক নং লিখুন"
-                   autofocus autocapitalize="none" autocorrect="off" inputmode="numeric">
+            <input type="text" id="searchInput" class="search-input" placeholder="মিটার নং বা গ্রাহক নং লিখুন" autofocus autocapitalize="none" autocorrect="off" inputmode="numeric">
             <button onclick="fetchData()" id="searchBtn" class="search-btn">খুঁজুন</button>
         </div>
 
@@ -188,64 +261,68 @@ body {
         <div class="error" id="error"></div>
     </div>
 
-    <!-- FORM SECTION -->
+    <!-- Form Section (initially hidden) -->
     <div class="form-section" id="formSection">
-
         <div class="header">
             <h1>আবেদনপত্র</h1>
-            <p>নির্বাহী প্রকৌশলী<br>বিক্রয় ও বিতরণ বিভাগ<br>বিদ্যুৎ উন্নয়ন বোর্ড, সুনামগঞ্জ।</p>
+            <p>
+                নির্বাহী প্রকৌশলী<br>
+                বিক্রয় ও বিতরণ বিভাগ<br>
+                বিদ্যুৎ উন্নয়ন বোর্ড, সুনামগঞ্জ।
+            </p>
         </div>
 
-        <table class="form-table">
-            <tr><td>১। গ্রাহকের নামঃ</td><td id="customerName">-</td></tr>
-            <tr><td>পিতার নামঃ</td><td id="fatherName">-</td></tr>
-            <tr><td>ঠিকানাঃ</td><td id="address">-</td></tr>
-            <tr><td>মোবাইল নংঃ</td><td id="mobileNo">-</td></tr>
-            <tr><td>মিটার নংঃ</td><td id="meterNo">-</td></tr>
-            <tr><td>গ্রাহক নংঃ</td><td id="consumerNo">-</td></tr>
-            <tr><td>বকেয়া বিলের টাকাঃ</td><td id="arrear">...........</td></tr>
-        </table>
-
-        <div class="recharge-section">
-            <h3>সর্বশেষ রিচার্জের তথ্য (প্রিপেইড)</h3>
-            <table class="recharge-table" id="rechargeTable">
-                <thead>
-                <tr><th>তারিখ</th><th>টাকার পরিমাণ</th></tr>
-                </thead>
-                <tbody>
-                <tr><td>-</td><td>-</td></tr>
-                <tr><td>-</td><td>-</td></tr>
-                <tr><td>-</td><td>-</td></tr>
-                <tr><td>-</td><td>-</td></tr>
-                </tbody>
+        <!-- FORM CONTENT - THIS WAS MISSING -->
+        <div class="form-content">
+            <table class="form-table">
+                <tr>
+                    <td>১। গ্রাহকের নামঃ</td>
+                    <td id="customerName">-</td>
+                </tr>
+                <tr>
+                    <td>পিতার নামঃ</td>
+                    <td id="fatherName">-</td>
+                </tr>
+                <tr>
+                    <td>ঠিকানাঃ</td>
+                    <td id="address">-</td>
+                </tr>
+                <tr>
+                    <td>মোবাইল নংঃ</td>
+                    <td id="mobileNo">-</td>
+                </tr>
+                <tr>
+                    <td>মিটার নংঃ</td>
+                    <td id="meterNo">-</td>
+                </tr>
+                <tr>
+                    <td>গ্রাহক নংঃ</td>
+                    <td id="consumerNo">-</td>
+                </tr>
+                <tr>
+                    <td>বকেয়া বিলের টাকাঃ</td>
+                    <td id="arrear">...........</td>
+                </tr>
             </table>
-        </div>
 
-        <!-- ✅ YOUR CHECKBOX SECTION FULLY INSERTED -->
-        <section class="notes">
-            <strong>সম্ভাব্য অভিযোগ (যে সমস্যার জন্য আবেদন করা হচ্ছে তা চেক করুন):</strong>
-            <ol>
-                <li><input type="checkbox"> লোড ছাড়াও মিটারে টাকা কাটে / মিটারে টাকা কাটে না</li>
-                <li><input type="checkbox"> মিটারের টুইস্ট টাইপ সীল / লীড / প্যাডলক সীল ভাঙা / চুরি হয়েছে</li>
-                <li><input type="checkbox"> মিটার ভেঙে / হারিয়ে / পুড়ে গেছে</li>
-                <li><input type="checkbox"> মিটার স্থানান্তর / পরিবর্তন করতে আগ্রহী</li>
-                <li><input type="checkbox"> মিটারের ডিসপ্লেতে ডিজিট এলোমেলো</li>
-                <li><input type="checkbox"> মিটার সিটি / পিটি নষ্ট হয়েছে</li>
-                <li><input type="checkbox"> মিটার কার্ড হারিয়ে গেছে</li>
-                <li><input type="checkbox"> মিটারের বাটন কাজ করছে না</li>
-                <li><input type="checkbox"> টার্মিনাল কভার খুলে ফেলেছি / অন্য কেউ খুলেছে</li>
-                <li><input type="checkbox"> মিটারে আউটপুট নেই</li>
-                <li><input type="checkbox"> মিটারে তারিখ / সময় ঠিক নেই</li>
-                <li><input type="checkbox"> নাম পরিবর্তন করা প্রয়োজন</li>
-                <li><input type="checkbox"> লোড বৃদ্ধি করা প্রয়োজন</li>
-                <li><input type="checkbox"> ব্যাটারি সমস্যা / লো-ভোল্টেজ সমস্যা</li>
-                <li><input type="checkbox"> মিটারে কোনো পাওয়ার নেই</li>
-                <li><input type="checkbox"> অন্যান্য .....................................................................................</li>
-            </ol>
-        </section>
-
-        <div class="signature">
-            <div class="sig-line">আবেদনকারীর স্বাক্ষর</div>
+            <div class="recharge-section">
+                <h3>সর্বশেষ রিচার্জের তথ্য (প্রিপেইড)</h3>
+                <table class="recharge-table" id="rechargeTable">
+                    <thead>
+                        <tr>
+                            <th>তারিখ</th>
+                            <th>টাকার পরিমাণ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- This will be filled by JavaScript -->
+                        <tr><td>-</td><td>-</td></tr>
+                        <tr><td>-</td><td>-</td></tr>
+                        <tr><td>-</td><td>-</td></tr>
+                        <tr><td>-</td><td>-</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="action-buttons">
@@ -253,98 +330,259 @@ body {
             <button class="btn btn-close" onclick="closeForm()">✕ বন্ধ</button>
             <button class="btn btn-back" onclick="showSearchSection()">← নতুন খোঁজ</button>
         </div>
-
     </div>
 </div>
 
 <script>
+    let selectedType = 'prepaid';
 
-/* ------- all your JS EXACTLY SAME ------- */
-
-let selectedType = 'prepaid';
-
-function debugLog(msg){
-    const d=document.getElementById("debugLog");
-    d.innerHTML+=msg+"<br>";
-    d.scrollTop=d.scrollHeight;
-}
-
-function selectType(t){
-    selectedType=t;
-    document.getElementById("prepaidBtn").classList.toggle("active",t==="prepaid");
-    document.getElementById("postpaidBtn").classList.toggle("active",t==="postpaid");
-}
-
-function fetchData(){
-    const input=document.getElementById("searchInput").value.trim();
-    if(!input){ showError("দয়া করে মিটার নং বা গ্রাহক নং লিখুন!"); return; }
-
-    showLoading();
-
-    if(window.AndroidInterface){
-        try{
-            const result=AndroidInterface.fetchDataForApplication(input,selectedType);
-            const data=JSON.parse(result);
-            fillFormWithData(data);
-        }catch(err){ showError("App error: "+err); }
-    } else {
-        showError("AndroidInterface not available");
+    // Debug logging function
+    function debugLog(message) {
+        console.log('🔍 DEBUG:', message);
+        const debugLog = document.getElementById('debugLog');
+        if (debugLog) {
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.innerHTML += `[${timestamp}] ${message}<br>`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+        }
     }
-}
 
-function fillFormWithData(data){
-    hideLoading();
-    if(data.error){ showError(data.error); return; }
+    // Debug function to test Android interface
+    function testAndroidInterface() {
+        debugLog('Testing Android interface...');
+        
+        if (window.AndroidInterface) {
+            debugLog('✅ AndroidInterface is available');
+            
+            // Test the fetchData method
+            const testInput = "123456789012"; // test meter number
+            const testType = "prepaid";
+            
+            debugLog('Testing with: ' + testInput + ', ' + testType);
+            
+            try {
+                const result = AndroidInterface.fetchDataForApplication(testInput, testType);
+                debugLog('✅ fetchDataForApplication returned: ' + result);
+                
+                if (result) {
+                    const data = JSON.parse(result);
+                    debugLog('✅ Parsed data: ' + JSON.stringify(data));
+                    
+                    if (data.error) {
+                        debugLog('❌ Error: ' + data.error);
+                    } else {
+                        debugLog('✅ Success! Data received');
+                        // Auto-fill form if data is good
+                        fillFormWithData(data);
+                    }
+                }
+            } catch (e) {
+                debugLog('❌ Error calling AndroidInterface: ' + e);
+            }
+        } else {
+            debugLog('❌ AndroidInterface NOT available');
+        }
+    }
 
-    document.getElementById("customerName").textContent=data.customer_name||"-";
-    document.getElementById("fatherName").textContent=data.father_name||"-";
-    document.getElementById("address").textContent=data.address||"-";
-    document.getElementById("mobileNo").textContent=data.mobile_no||"-";
-    document.getElementById("meterNo").textContent=data.meter_no||"-";
-    document.getElementById("consumerNo").textContent=data.consumer_no||"-";
+    function selectType(type) {
+        selectedType = type;
+        document.getElementById('prepaidBtn').classList.toggle('active', type === 'prepaid');
+        document.getElementById('postpaidBtn').classList.toggle('active', type === 'postpaid');
 
-    document.getElementById("arrear").textContent =
-        (data.arrear && data.arrear!=="0") ? data.arrear : "...........";
+        const input = document.getElementById('searchInput');
+        if (type === 'prepaid') {
+            input.placeholder = '১২ ডিজিটের মিটার নং লিখুন';
+        } else {
+            input.placeholder = 'গ্রাহক নং বা মিটার নং লিখুন';
+        }
+        
+        debugLog('Type selected: ' + type);
+    }
 
-    const tbody=document.getElementById("rechargeTable").querySelector("tbody");
-    tbody.innerHTML="";
-    (data.recharges||[]).forEach(r=>{
-        tbody.innerHTML+=`<tr><td>${r.Date||"-"}</td><td>${r.Amount||"-"}</td></tr>`;
+    function fetchData() {
+        const input = document.getElementById('searchInput').value.trim();
+        if (!input) {
+            showError('দয়া করে মিটার নং বা গ্রাহক নং লিখুন!');
+            return;
+        }
+
+        showLoading();
+        hideError();
+        debugLog('Fetching data for: ' + input + ', type: ' + selectedType);
+
+        if (window.AndroidInterface) {
+            debugLog('Calling AndroidInterface...');
+            try {
+                const result = window.AndroidInterface.fetchDataForApplication(input, selectedType);
+                debugLog('Raw result received: ' + result);
+                
+                // Process the result
+                if (result) {
+                    try {
+                        const data = JSON.parse(result);
+                        debugLog('Parsed data successfully');
+                        fillFormWithData(data);
+                    } catch (parseError) {
+                        debugLog('Error parsing JSON: ' + parseError);
+                        showError('Data format error: ' + parseError);
+                    }
+                } else {
+                    debugLog('No result returned from Android');
+                    showError('No data received from app');
+                }
+            } catch (callError) {
+                debugLog('Error calling AndroidInterface: ' + callError);
+                showError('App communication error: ' + callError);
+            }
+        } else {
+            debugLog('❌ AndroidInterface not available');
+            showError('Connection failed: Android interface not available');
+        }
+    }
+
+    function showLoading() {
+        debugLog('Showing loading...');
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('searchBtn').disabled = true;
+        document.getElementById('searchBtn').textContent = 'খুঁজছি...';
+    }
+
+    function hideLoading() {
+        debugLog('Hiding loading...');
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('searchBtn').disabled = false;
+        document.getElementById('searchBtn').textContent = 'খুঁজুন';
+    }
+
+    function showError(message) {
+        debugLog('Showing error: ' + message);
+        document.getElementById('error').textContent = message;
+        document.getElementById('error').style.display = 'block';
+        hideLoading();
+    }
+
+    function hideError() {
+        document.getElementById('error').style.display = 'none';
+    }
+
+    function showSearchSection() {
+        document.getElementById('searchSection').style.display = 'block';
+        document.getElementById('formSection').style.display = 'none';
+        clearForm();
+        hideError();
+        debugLog('Returned to search section');
+    }
+
+    function closeForm() {
+        debugLog('Closing application...');
+        if (window.AndroidInterface) {
+            AndroidInterface.closeApplication();
+        }
+    }
+
+    function clearForm() {
+        document.getElementById('customerName').textContent = '-';
+        document.getElementById('fatherName').textContent = '-';
+        document.getElementById('address').textContent = '-';
+        document.getElementById('mobileNo').textContent = '-';
+        document.getElementById('meterNo').textContent = '-';
+        document.getElementById('consumerNo').textContent = '-';
+        document.getElementById('arrear').textContent = '...........';
+
+        const tbody = document.getElementById('rechargeTable').getElementsByTagName('tbody')[0];
+        tbody.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td>-</td><td>-</td>';
+            tbody.appendChild(tr);
+        }
+    }
+
+    // Function to be called from Android to fill form
+    function fillFormWithData(data) {
+        debugLog('Filling form with data: ' + JSON.stringify(data));
+
+        // Always hide loading when data arrives
+        hideLoading();
+
+        if (data.error) {
+            showError('Error: ' + data.error);
+            return;
+        }
+
+        // Fill the form fields
+        document.getElementById('customerName').textContent = data.customer_name || '-';
+        document.getElementById('fatherName').textContent = data.father_name || '-';
+        document.getElementById('address').textContent = data.address || '-';
+        document.getElementById('mobileNo').textContent = data.mobile_no || '-';
+        document.getElementById('meterNo').textContent = data.meter_no || '-';
+        document.getElementById('consumerNo').textContent = data.consumer_no || '-';
+
+        if (data.arrear && data.arrear !== '0' && data.arrear !== 'N/A') {
+            document.getElementById('arrear').textContent = data.arrear.startsWith('৳') ? data.arrear : '৳' + data.arrear;
+        } else {
+            document.getElementById('arrear').textContent = '...........';
+        }
+
+        // Fill recharge table
+        const tbody = document.getElementById('rechargeTable').getElementsByTagName('tbody')[0];
+        tbody.innerHTML = '';
+
+        if (data.recharges && data.recharges.length > 0) {
+            data.recharges.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${r.Date || '-'}</td><td>${r.Amount || '-'}</td>`;
+                tbody.appendChild(tr);
+            });
+
+            // Fill remaining rows if less than 4
+            for (let i = data.recharges.length; i < 4; i++) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td>-</td><td>-</td>';
+                tbody.appendChild(tr);
+            }
+        } else {
+            // Add empty rows if no data
+            for (let i = 0; i < 4; i++) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td>-</td><td>-</td>';
+                tbody.appendChild(tr);
+            }
+        }
+
+        // Show the form section
+        document.getElementById('searchSection').style.display = 'none';
+        document.getElementById('formSection').style.display = 'block';
+        debugLog('Form filled and displayed successfully');
+    }
+
+    // Auto-focus on input and test Android interface
+    document.addEventListener('DOMContentLoaded', function() {
+        debugLog('HTML page loaded');
+        
+        setTimeout(function() {
+            var input = document.getElementById('searchInput');
+            if (input) {
+                input.focus();
+                debugLog('Input field focused');
+            }
+            
+            // Test Android interface after page loads
+            setTimeout(testAndroidInterface, 500);
+        }, 500);
     });
 
-    document.getElementById("searchSection").style.display="none";
-    document.getElementById("formSection").style.display="block";
-}
+    // Allow Enter key to search
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            fetchData();
+        }
+    });
 
-function showLoading(){
-    document.getElementById("loading").style.display="block";
-    document.getElementById("searchBtn").disabled=true;
-    document.getElementById("searchBtn").textContent="খুঁজছি...";
-}
-
-function hideLoading(){
-    document.getElementById("loading").style.display="none";
-    document.getElementById("searchBtn").disabled=false;
-    document.getElementById("searchBtn").textContent="খুঁজুন";
-}
-
-function showError(m){
-    document.getElementById("error").textContent=m;
-    document.getElementById("error").style.display="block";
-    hideLoading();
-}
-
-function hideError(){ document.getElementById("error").style.display="none"; }
-
-function showSearchSection(){
-    document.getElementById("formSection").style.display="none";
-    document.getElementById("searchSection").style.display="block";
-}
-
-function closeForm(){
-    if(window.AndroidInterface){ AndroidInterface.closeApplication(); }
-}
-
+    // Add global error handler
+    window.addEventListener('error', function(e) {
+        debugLog('Global error: ' + e.message);
+    });
 </script>
 </body>
 </html>
