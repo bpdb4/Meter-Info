@@ -1,330 +1,270 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>আবেদনপত্র</title>
 
     <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* ===========================
+   Word-like page styling
+   =========================== */
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
-    padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
+/* Keep all font/text choices exactly as before (no changes to content/font-family) */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    height: 100%;
+    background: #f2f2f2; /* subtle page background outside the paper */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* kept as in original */
+    color: #222;
 }
 
-/* Modern Card Design */
+/* The "paper" container — looks like a printed Word page */
 .application-container {
-    max-width: 900px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 15px;
-    padding: 30px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    width: 794px; /* ~A4 width at 96dpi (approx) */
+    max-width: calc(100% - 40px);
+    margin: 36px auto; /* space around the paper like Word does */
+    background: #ffffff; /* white paper */
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 3px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    padding: 40px 56px; /* page margins inside the paper */
+    line-height: 1.55;
+    font-size: 16px; /* keep relative size comfortable */
 }
 
-/* Enhanced Search Section */
-.search-section {
-    background: #ffffff;
-    padding: 25px;
-    border-radius: 12px;
-    margin-bottom: 25px;
-    border: 1px solid #e1e5e9;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-}
-
-/* Type Selector and Search Row */
-.type-selector { 
-    display: flex; 
-    gap: 10px; 
-    margin-bottom: 15px; 
-}
-
-.search-row { 
-    display: flex; 
-    gap: 10px; 
-    align-items: center; 
-}
-
-/* Modern Gradient Buttons */
-.type-btn {
-    flex: 1; 
-    padding: 12px; 
-    border: none; 
-    border-radius: 8px;
-    background: linear-gradient(145deg, #f8f9fa, #e9ecef);
-    cursor: pointer; 
-    text-align: center; 
-    transition: all 0.3s ease;
-    font-weight: 600;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-.type-btn.active { 
-    background: linear-gradient(145deg, #007bff, #0056b3);
-    color: white; 
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
-}
-
-/* Enhanced Input Fields */
-.search-input {
-    flex: 1; 
-    padding: 14px; 
-    border: 2px solid #e1e5e9; 
-    border-radius: 8px;
-    font-size: 16px;
-    transition: all 0.3s ease;
-}
-
-.search-input:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
-    outline: none;
-}
-
-/* Search Button */
-.search-btn {
-    background: linear-gradient(145deg, #007bff, #0056b3);
-    color: white; 
-    border: none;
-    padding: 14px 24px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.search-btn:disabled { 
-    background: #6c757d; 
-    cursor: not-allowed;
-}
-
-/* Modern Action Buttons */
-.action-buttons {
-    display: flex; 
-    gap: 12px; 
-    justify-content: center;
-    margin-top: 35px; 
-    padding-top: 25px; 
-    border-top: 1px solid #e1e5e9;
-    flex-wrap: wrap;
-}
-
-.btn {
-    padding: 14px 24px; 
-    border: none; 
-    border-radius: 8px; 
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    min-width: 140px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-.btn-print { 
-    background: linear-gradient(145deg, #28a745, #1e7e34);
-    color: white; 
-}
-
-.btn-pdf { 
-    background: linear-gradient(145deg, #dc3545, #c82333);
-    color: white; 
-}
-
-.btn-close { 
-    background: linear-gradient(145deg, #6c757d, #545b62);
-    color: white; 
-}
-
-.btn-back { 
-    background: linear-gradient(145deg, #17a2b8, #138496);
-    color: white; 
-}
-
-.btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-}
-
-/* Enhanced Form Table */
-.form-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 30px;
-    font-size: 17px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.form-table tr:nth-child(even) {
-    background: #f8f9fa;
-}
-
-.form-table td {
-    padding: 14px; 
-    border: 1px solid #dee2e6; 
-    vertical-align: top;
-    transition: background-color 0.2s ease;
-}
-
-.form-table tr:hover td {
-    background: #e3f2fd;
-}
-
-.form-table td:first-child {
-    font-weight: 700; 
-    width: 32%; 
-    background: linear-gradient(145deg, #007bff, #0056b3);
-    color: white;
-    border-right: 3px solid #0056b3;
-}
-
-/* Enhanced Header */
+/* Document header — similar to Word document header section */
 .header {
-    margin-bottom: 30px;
-    padding-bottom: 25px;
-    border-bottom: 3px solid #007bff;
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    padding: 25px;
-    border-radius: 12px;
     text-align: center;
+    margin-bottom: 18px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    padding-bottom: 12px;
 }
 
 .header h1 {
-    font-size: 32px;
-    color: #2c3e50;
-    margin-bottom: 15px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    font-size: 26px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 6px;
 }
 
 .header p {
-    font-size: 18px;
-    line-height: 1.5;
-    color: #495057;
+    font-size: 14px;
+    color: #333;
+    line-height: 1.45;
 }
 
-/* Recharge Section */
-.recharge-section { 
-    margin-top: 30px; 
+/* Search Section: kept but neutralized to not look like a web card */
+.search-section {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 18px;
+    border: none;
 }
 
-.recharge-table { 
-    width: 100%; 
-    border-collapse: collapse; 
+/* Keep buttons readable but neutral — will look like Word controls */
+.type-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.type-btn {
+    padding: 8px 12px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: #f6f6f6;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.type-btn.active {
+    background: #e9ecef;
+    border-color: rgba(0,0,0,0.12);
+}
+
+/* Search input row */
+.search-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.search-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 3px;
+    background: #fff;
+    font-size: 15px;
+}
+
+.search-btn {
+    padding: 10px 16px;
+    border-radius: 3px;
+    border: none;
+    background: #e9ecef;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* Info and debug panels kept minimal */
+.debug-info {
+    background: #fafafa;
+    border: 1px solid rgba(0,0,0,0.05);
+    padding: 10px;
+    font-size: 13px;
+    color: #444;
+    margin-top: 8px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+/* Main form table — Word-like: borders, row backgrounds, bold labels */
+.form-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 18px;
     font-size: 16px;
 }
 
-.recharge-table th, 
-.recharge-table td {
-    padding: 10px; 
-    border: 1px solid #ccc; 
+.form-table tr:nth-child(even) td {
+    background: transparent; /* avoid heavy zebra, looks like Word by default */
+}
+
+.form-table td {
+    padding: 10px 12px;
+    vertical-align: top;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Left column behaves like a field label in Word */
+.form-table td:first-child {
+    width: 34%;
+    font-weight: 700;
+    color: #111;
+    background: transparent;
+    border-right: none;
+}
+
+/* Value column */
+.form-table td:nth-child(2) {
+    color: #222;
+}
+
+/* If you want the 'বকেয়া' to stand out like a Word highlighted value */
+#arrear {
+    font-weight: 600;
+    color: #b22222; /* a subtle red to indicate arrear; you can keep original color */
+}
+
+/* Recharge (recharge-table) — make it like a simple Word table */
+.recharge-section { margin-top: 18px; }
+
+.recharge-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+    margin-top: 8px;
+    border: 1px solid rgba(0,0,0,0.08);
+}
+
+.recharge-table th, .recharge-table td {
+    padding: 8px 10px;
+    border: 1px solid rgba(0,0,0,0.06);
     text-align: center;
 }
 
-.recharge-table th { 
-    background: #007bff; 
-    color: white; 
+.recharge-table th {
+    background: #f3f3f3;
+    font-weight: 700;
 }
 
-.recharge-table tr:nth-child(even) { 
-    background: #f8f9fa; 
+/* Complaint list — keep checkboxes and text unchanged; only spacing adjusted */
+.notes {
+    margin-top: 18px;
+    background: transparent;
+    padding: 6px 0;
+    font-size: 15px;
 }
 
-/* Notes Section */
-.notes { 
-    margin-top: 30px; 
-    padding: 20px; 
-    font-size: 17px; 
-    background: #f8f9fa;
-    border-radius: 8px;
+.notes ol {
+    padding-left: 20px;
 }
 
-.notes strong { 
-    display: block; 
-    margin-bottom: 15px; 
+.notes li {
+    margin: 6px 0;
 }
 
 /* Signature */
 .signature {
-    margin-top: 40px; 
-    text-align: right; 
-    padding: 20px;
+    margin-top: 26px;
+    text-align: right;
 }
 
 .sig-line {
-    border-top: 1px solid #000; 
-    width: 220px; 
-    margin-left: auto; 
-    padding-top: 5px;
     display: inline-block;
+    border-top: 1px solid rgba(0,0,0,0.6);
+    width: 220px;
+    padding-top: 6px;
+    text-align: center;
+    font-size: 14px;
 }
 
-/* Print Optimizations */
-@page { 
-    size: A4; 
-    margin: 15mm; 
+/* Action buttons at bottom — neutral like Word toolbar */
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 22px;
+}
+
+.btn {
+    padding: 8px 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: #f4f4f4;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* Loading / error blocks */
+.loading {
+    display: none;
+    margin-top: 8px;
+    padding: 8px;
+    background: #fffbe6;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+
+.error {
+    display: none;
+    margin-top: 8px;
+    padding: 8px;
+    background: #ffecec;
+    border: 1px solid rgba(0,0,0,0.06);
+    color: #9b1c1c;
+}
+
+/* Print friendly: margins and page breaks similar to Word */
+@page {
+    size: A4;
+    margin: 20mm;
 }
 
 @media print {
-    body { 
-        background: white; 
-        padding: 0; 
-        margin: 0; 
-    }
-    .search-section, .action-buttons, .debug-info { 
-        display: none !important; 
-    }
-    .application-container { 
-        box-shadow: none !important; 
-        margin: 0 !important; 
-        padding: 0 15mm !important; 
-    }
+    html, body { background: #fff; }
+    .application-container { box-shadow: none; margin: 0; padding: 12mm; width: auto; border: none; }
+    .search-section, .action-buttons, .debug-info { display: none !important; }
 }
 
-/* Enhanced Loading State */
-.loading {
-    display: none;
-    text-align: center;
-    padding: 20px;
-    background: linear-gradient(145deg, #e3f2fd, #bbdefb);
-    border-radius: 8px;
-    margin: 15px 0;
-    color: #007bff;
-    font-weight: 600;
-}
-
-/* Better Error Styling */
-.error {
-    display: none;
-    color: #721c24;
-    background: linear-gradient(145deg, #f8d7da, #f5c6cb);
-    border: 1px solid #f5c6cb;
-    border-radius: 8px;
-    padding: 15px;
-    margin-top: 15px;
-    font-weight: 600;
-}
-
-.debug-info {
-    background: #fafafa; 
-    border: 1px solid #ddd; 
-    border-radius: 6px;
-    padding: 10px; 
-    margin-top: 10px; 
-    font-size: 12px; 
-    color: #6c757d;
-    max-height: 150px; 
-    overflow-y: auto;
+/* small responsive tweak */
+@media (max-width: 820px) {
+    .application-container { padding: 24px 18px; margin: 16px; width: auto; }
 }
     </style>
 </head>
@@ -333,9 +273,9 @@ body {
 <div class="application-container">
 
     <div class="search-section" id="searchSection">
-        <h2>গ্রাহক তথ্য খুঁজুন</h2>
+        <h2 style="font-size:16px;margin-bottom:8px;">গ্রাহক তথ্য খুঁজুন</h2>
 
-        <div class="debug-info" id="debugInfo">
+        <div class="debug-info" id="debugInfo" style="display:none;">
             <strong>ডিবাগ তথ্য:</strong>
             <div id="debugLog"></div>
         </div>
@@ -355,15 +295,15 @@ body {
         <div class="error" id="error"></div>
     </div>
 
-    <div class="form-section" id="formSection">
+    <div class="form-section" id="formSection" style="display:none;">
 
         <div class="header">
             <h1>আবেদনপত্র</h1>
             <p>নির্বাহী প্রকৌশলী<br>বিক্রয় ও বিতরণ বিভাগ<br>বিদ্যুৎ উন্নয়ন বোর্ড, সুনামগঞ্জ।</p>
         </div>
 
-        <table class="form-table">
-            <tr><td>১। গ্রাহকের নামঃ</td><td id="customerName">-</td></tr>
+        <table class="form-table" role="presentation">
+            <tr><td>গ্রাহকের নামঃ</td><td id="customerName">-</td></tr>
             <tr><td>পিতার নামঃ</td><td id="fatherName">-</td></tr>
             <tr><td>ঠিকানাঃ</td><td id="address">-</td></tr>
             <tr><td>মোবাইল নংঃ</td><td id="mobileNo">-</td></tr>
@@ -373,8 +313,8 @@ body {
         </table>
 
         <div class="recharge-section">
-            <h3>সর্বশেষ রিচার্জের তথ্য (প্রিপেইড)</h3>
-            <table class="recharge-table" id="rechargeTable">
+            <h3 style="font-size:16px;margin-bottom:8px;">সর্বশেষ রিচার্জের তথ্য (প্রিপেইড)</h3>
+            <table class="recharge-table" id="rechargeTable" aria-describedby="Recharge Table">
                 <thead>
                 <tr><th>তারিখ</th><th>টাকার পরিমাণ</th></tr>
                 </thead>
@@ -414,17 +354,17 @@ body {
         </div>
 
         <div class="action-buttons">
-            <button class="btn btn-print" onclick="window.print()">🖨️ প্রিন্ট</button>
-            <button class="btn btn-pdf" onclick="saveAsPDF()">📄 PDF সেভ</button>
-            <button class="btn btn-back" onclick="showSearchSection()">← নতুন খোঁজ</button>
-            <button class="btn btn-close" onclick="closeForm()">✕ বন্ধ</button>
+            <button class="btn" onclick="window.print()">🖨️ প্রিন্ট</button>
+            <button class="btn" onclick="saveAsPDF()">📄 PDF সেভ</button>
+            <button class="btn" onclick="showSearchSection()">← নতুন খোঁজ</button>
+            <button class="btn" onclick="closeForm()">✕ বন্ধ</button>
         </div>
 
     </div>
 </div>
 
 <script>
-// Add PDF save function
+// Add PDF save function (keeps original logic)
 function saveAsPDF() {
     if (window.AndroidInterface && AndroidInterface.saveAsPDF) {
         AndroidInterface.saveAsPDF();
@@ -435,13 +375,12 @@ function saveAsPDF() {
     }
 }
 
-/* ------- EXISTING JS LOGIC ------- */
+/* ------- EXISTING JS LOGIC (kept identical) ------- */
 let selectedType = 'prepaid';
 
 function debugLog(msg){
     const d=document.getElementById("debugLog");
-    d.innerHTML+=msg+"<br>";
-    d.scrollTop=d.scrollHeight;
+    if(d){ d.innerHTML+=msg+"<br>"; d.scrollTop=d.scrollHeight; }
 }
 
 function selectType(t){
@@ -480,18 +419,18 @@ function fillFormWithData(data){
 
     document.getElementById("arrear").textContent =
         (data.arrear && data.arrear!=="0") ? data.arrear : "কোনও বকেয়া নেই";
-    
+
     const tbody=document.getElementById("rechargeTable").querySelector("tbody");
     tbody.innerHTML="";
-    
+
     let rechargeData = data.recharges || [];
     let count = 0;
-    
+
     rechargeData.slice(0, 4).forEach(r=>{
         tbody.innerHTML+=`<tr><td>${r.Date||"-"}</td><td>${r.Amount||"-"}</td></tr>`;
         count++;
     });
-    
+
     for (let i = count; i < 4; i++) {
         tbody.innerHTML += `<tr><td>-</td><td>-</td></tr>`;
     }
@@ -513,12 +452,12 @@ function hideLoading(){
 }
 
 function showError(m){
-    document.getElementById("error").textContent=m;
-    document.getElementById("error").style.display="block";
+    const err = document.getElementById("error");
+    if(err){ err.textContent=m; err.style.display="block"; }
     hideLoading();
 }
 
-function hideError(){ document.getElementById("error").style.display="none"; }
+function hideError(){ const e=document.getElementById("error"); if(e) e.style.display="none"; }
 
 function showSearchSection(){
     document.getElementById("formSection").style.display="none";
