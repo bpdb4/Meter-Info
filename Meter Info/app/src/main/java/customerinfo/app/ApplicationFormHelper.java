@@ -321,15 +321,4 @@ public class ApplicationFormHelper {
         return "";
     }
 }
-    private boolean isValidValue(String value) {
-        if (value == null) return false;
-
-        String trimmed = value.trim();
-        return !trimmed.isEmpty() &&
-               !trimmed.equals("N/A") &&
-               !trimmed.equals("null") &&
-               !trimmed.equals("{}") &&
-               !trimmed.equals("undefined") &&
-               !trimmed.equals("0");
-    }
-}
+  
