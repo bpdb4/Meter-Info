@@ -213,7 +213,15 @@
         <div class="info-line"><span class="info-label">পিতা/স্বামীর নামঃ </span><span class="info-value" id="fatherName">_____________</span></div>
         <div class="info-line"><span class="info-label">ঠিকানাঃ </span><span class="info-value" id="address">_____________</span></div>
         <div class="info-line"><span class="info-label">টেলিফোন নংঃ </span><span class="info-value" id="mobileNo">_____________</span></div>
-        <div class="info-line"><span class="info-label">মিটার নং/গ্রাহক নংঃ </span><span class="info-value" id="meterNo">_____________</span>   <b>বকেয়াঃ</b> <span id="arrear">________</span></div>
+        
+        <!-- SEPARATED METER NO AND CONSUMER NO FIELDS -->
+        <div class="info-line">
+            <span class="info-label">মিটার নংঃ </span><span class="info-value" id="meterNo">_____________</span>
+        </div>
+        <div class="info-line">
+            <span class="info-label">গ্রাহক নংঃ </span><span class="info-value" id="consumerNo">_____________</span>
+            <span style="margin-left: 20px;"><b>বকেয়াঃ</b> <span id="arrear">________</span></span>
+        </div>
 
         <!-- Complaint title box -->
         <div class="complain-box">সম্ভাব্য অভিযোগ</div>
@@ -242,7 +250,7 @@
             </div>
 
             <!-- RIGHT SIDE: RECHARGE TABLE -->
-            <div>
+            <div id="rechargeSection">
                 <div class="recharge-title">সর্বশেষ রিচার্জের তথ্য</div>
 
                 <table class="recharge-table" id="rechargeTable">
@@ -286,6 +294,8 @@ function saveAsPDF() {
 
 /* ------- WORKING JS LOGIC FROM YOUR WORKING CODE ------- */
 let selectedType = 'prepaid';
+let currentCustomerType = 'prepaid'; // Track current displayed customer type
+let currentInputNumber = ''; // Store the input number
 
 function debugLog(msg){
     const d=document.getElementById("debugLog");
@@ -296,18 +306,28 @@ function selectType(t){
     selectedType=t;
     document.getElementById("prepaidBtn").classList.toggle("active",t==="prepaid");
     document.getElementById("postpaidBtn").classList.toggle("active",t==="postpaid");
+    
+    // Update placeholder based on type
+    const input = document.getElementById("searchInput");
+    if (t === 'prepaid') {
+        input.placeholder = '১২ ডিজিটের মিটার নং লিখুন';
+    } else {
+        input.placeholder = 'গ্রাহক নং বা মিটার নং লিখুন';
+    }
 }
 
 function fetchData(){
     const input=document.getElementById("searchInput").value.trim();
     if(!input){ showError("দয়া করে মিটার নং বা গ্রাহক নং লিখুন!"); return; }
 
+    currentInputNumber = input; // Store the input number
     showLoading();
 
     if(window.AndroidInterface){
         try{
             const result=AndroidInterface.fetchDataForApplication(input,selectedType);
             const data=JSON.parse(result);
+            currentCustomerType = selectedType; // Set current customer type
             fillFormWithData(data);
         }catch(err){ showError("App error: "+err); }
     } else {
@@ -324,32 +344,51 @@ function fillFormWithData(data){
     document.getElementById("fatherName").textContent=data.father_name||"-";
     document.getElementById("address").textContent=data.address||"-";
     document.getElementById("mobileNo").textContent=data.mobile_no||"-";
-    document.getElementById("meterNo").textContent=data.meter_no||"-";
     
+    // Handle meter number and consumer number based on customer type
+    if (currentCustomerType === 'prepaid') {
+        // For prepaid: show input number as meter number, data.consumer_no as consumer number
+        document.getElementById("meterNo").textContent = currentInputNumber || "-";
+        document.getElementById("consumerNo").textContent = data.consumer_no || "-";
+    } else {
+        // For postpaid: show data.meter_no as meter number, input number as consumer number
+        document.getElementById("meterNo").textContent = data.meter_no || "-";
+        document.getElementById("consumerNo").textContent = currentInputNumber || "-";
+    }
+
     // Handle arrear - using the same logic as working code
     document.getElementById("arrear").textContent = (data.arrear && data.arrear!=="0") ? data.arrear : "কোনও বকেয়া নেই";
 
-    // Fill recharge table using the working logic
-    const rechargeData = data.recharges || [];
-    
-    // Clear existing data
-    for (let i = 1; i <= 3; i++) {
-        document.getElementById(`rechargeDate${i}`).textContent = "";
-        document.getElementById(`rechargeAmount${i}`).textContent = "";
-    }
-    
-    // Fill with new data
-    let count = 0;
-    rechargeData.slice(0, 3).forEach(r=>{
-        count++;
-        document.getElementById(`rechargeDate${count}`).textContent = r.Date||"-";
-        document.getElementById(`rechargeAmount${count}`).textContent = r.Amount||"-";
-    });
+    // Handle recharge section based on customer type
+    const rechargeSection = document.getElementById("rechargeSection");
+    if (currentCustomerType === 'prepaid') {
+        // Show and fill recharge data for prepaid
+        rechargeSection.style.display = 'block';
+        
+        const rechargeData = data.recharges || [];
 
-    // Show empty rows for remaining slots
-    for (let i = count + 1; i <= 3; i++) {
-        document.getElementById(`rechargeDate${i}`).innerHTML = "&nbsp;";
-        document.getElementById(`rechargeAmount${i}`).innerHTML = "&nbsp;";
+        // Clear existing data
+        for (let i = 1; i <= 3; i++) {
+            document.getElementById(`rechargeDate${i}`).textContent = "";
+            document.getElementById(`rechargeAmount${i}`).textContent = "";
+        }
+
+        // Fill with new data
+        let count = 0;
+        rechargeData.slice(0, 3).forEach(r=>{
+            count++;
+            document.getElementById(`rechargeDate${count}`).textContent = r.Date||"-";
+            document.getElementById(`rechargeAmount${count}`).textContent = r.Amount||"-";
+        });
+
+        // Show empty rows for remaining slots
+        for (let i = count + 1; i <= 3; i++) {
+            document.getElementById(`rechargeDate${i}`).innerHTML = "&nbsp;";
+            document.getElementById(`rechargeAmount${i}`).innerHTML = "&nbsp;";
+        }
+    } else {
+        // Hide recharge section for postpaid
+        rechargeSection.style.display = 'none';
     }
 
     document.getElementById("searchSection").style.display="none";
@@ -379,6 +418,10 @@ function hideError(){ const e=document.getElementById("error"); if(e) e.style.di
 function showSearchSection(){
     document.getElementById("formSection").style.display="none";
     document.getElementById("searchSection").style.display="block";
+    // Reset recharge section visibility when going back to search
+    document.getElementById("rechargeSection").style.display = 'block';
+    // Clear stored input number
+    currentInputNumber = '';
 }
 
 function closeForm(){
@@ -387,6 +430,13 @@ function closeForm(){
 
 document.addEventListener('DOMContentLoaded', () => {
     selectType(selectedType);
+});
+
+// Allow Enter key to search
+document.getElementById("searchInput").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        fetchData();
+    }
 });
 </script>
 </body>
