@@ -34,6 +34,7 @@ public class ApplicationFormHelper {
         return result;
     }
 
+    // ---------------- PREPAID ------------------
     private Map<String, Object> fetchPrepaidDataForApplication(String meterNumber) {
         Map<String, Object> result = new HashMap<>();
 
@@ -62,6 +63,7 @@ public class ApplicationFormHelper {
         return result;
     }
 
+    // ---------------- POSTPAID ------------------
     private Map<String, Object> fetchPostpaidDataForApplication(String customerNumber) {
         Map<String, Object> result = new HashMap<>();
 
@@ -82,19 +84,16 @@ public class ApplicationFormHelper {
         return result;
     }
 
-    private void extractFormData(Map<String, Object> server3Result, 
-                                Map<String, Object> server1Result, 
-                                Map<String, Object> result, 
+    // MASTER FORM EXTRACTOR (common)
+    private void extractFormData(Map<String, Object> server3Result,
+                                Map<String, Object> server1Result,
+                                Map<String, Object> result,
                                 String inputNumber,
                                 String type) {
         try {
             JSONObject server3Data = (JSONObject) server3Result.get("SERVER3_data");
-            Object server2DataObj = server3Result.get("SERVER2_data");
-            JSONObject server2Data = null;
-
-            if (server2DataObj instanceof JSONObject) {
-                server2Data = (JSONObject) server2DataObj;
-            }
+            Object server2Obj = server3Result.get("SERVER2_data");
+            JSONObject server2Data = server2Obj instanceof JSONObject ? (JSONObject) server2Obj : null;
 
             extractCustomerInfo(server3Data, server2Data, server1Result, result, inputNumber, type);
             extractBalanceInfo(server3Data, server2Data, result);
@@ -111,369 +110,217 @@ public class ApplicationFormHelper {
         }
     }
 
-    private void extractCustomerInfo(JSONObject server3Data, JSONObject server2Data, 
-                                   Map<String, Object> server1Result, 
-                                   Map<String, Object> result, 
-                                   String inputNumber, String type) {
+    // ---------------- CUSTOMER INFO -------------------
+    private void extractCustomerInfo(JSONObject server3Data, JSONObject server2Data,
+                                     Map<String, Object> server1Result,
+                                     Map<String, Object> result,
+                                     String inputNumber, String type) {
+
         Map<String, String> customerInfo = new HashMap<>();
 
-        // FOR PREPAID: Always get consumer number from SERVER1 first
-        String consumerNumber = "";
+        // ---------- PREPAID ----------
         if ("prepaid".equals(type) && server1Result != null) {
             try {
-                Object server1DataObj = server1Result.get("SERVER1_data");
-                if (server1DataObj instanceof String) {
-                    String responseBody = (String) server1DataObj;
-                    consumerNumber = extractConsumerNumberFromSERVER1(responseBody);
-                    
-                    // Extract ALL customer info from SERVER1 first
-                    extractCustomerInfoFromSERVER1(responseBody, customerInfo);
-                    
-                    // Only use SERVER2/SERVER3 if consumer number starts with "44"
-                    if (consumerNumber.startsWith("44") && server3Data != null) {
-                        // Supplement with SERVER3 data for "44" series
-                        if (customerInfo.get("customer_name").isEmpty()) {
-                            customerInfo.put("customer_name", server3Data.optString("customerName", ""));
-                        }
-                        if (customerInfo.get("father_name").isEmpty()) {
-                            customerInfo.put("father_name", server3Data.optString("fatherName", ""));
-                        }
-                        if (customerInfo.get("address").isEmpty()) {
-                            customerInfo.put("address", server3Data.optString("customerAddr", ""));
-                        }
-                        if (customerInfo.get("consumer_no").isEmpty()) {
-                            customerInfo.put("consumer_no", server3Data.optString("customerNumber", ""));
-                        }
+                Object s1obj = server1Result.get("SERVER1_data");
+                if (s1obj instanceof String) {
+                    String body = (String) s1obj;
+
+                    // extract full fields
+                    extractCustomerInfoFromSERVER1(body, customerInfo);
+
+                    // consumer number from SERVER1
+                    String consumerNumber = extractConsumerNumberFromSERVER1(body);
+                    if (!consumerNumber.isEmpty()) {
+                        customerInfo.put("consumer_no", consumerNumber);
                     }
                 }
-            } catch (Exception e) {
-                System.out.println("❌ Error extracting customer info from SERVER1: " + e.getMessage());
-            }
+            } catch (Exception ignored) {}
         }
 
-        // FOR POSTPAID: Use SERVER3 data
+        // ---------- POSTPAID (simple version as requested) ----------
         if ("postpaid".equals(type) && server3Data != null) {
+
             customerInfo.put("customer_name", server3Data.optString("customerName", ""));
             customerInfo.put("father_name", server3Data.optString("fatherName", ""));
             customerInfo.put("address", server3Data.optString("customerAddr", ""));
-            customerInfo.put("consumer_no", server3Data.optString("customerNumber", ""));
-            customerInfo.put("meter_no", server3Data.optString("meterNum", ""));
+
+            // No mobile number for postpaid
+            customerInfo.put("mobile_no", "");
+
+            // meter number (fallback to input)
+            String meter = server3Data.optString("meterNum", "");
+            if (meter == null || meter.isEmpty() || meter.equals("null")) {
+                meter = inputNumber;
+            }
+            customerInfo.put("meter_no", meter);
+
+            // always the input number
+            customerInfo.put("consumer_no", inputNumber);
         }
 
-        // Always set meter number for prepaid
+        // PREPAID meter number override
         if ("prepaid".equals(type)) {
             customerInfo.put("meter_no", inputNumber);
         }
 
-        // Mobile number extraction
-        if ("prepaid".equals(type) && server1Result != null) {
-            try {
-                Object server1DataObj = server1Result.get("SERVER1_data");
-                if (server1DataObj instanceof String) {
-                    String responseBody = (String) server1DataObj;
-                    String mobileNo = extractMobileFromSERVER1(responseBody);
-                    if (!mobileNo.isEmpty()) {
-                        customerInfo.put("mobile_no", mobileNo);
-                    }
-                }
-            } catch (Exception e) {
-                System.out.println("❌ Error extracting mobile from SERVER1: " + e.getMessage());
-            }
-        }
-
-        // SERVER2 mobile number for postpaid
-        if (server2Data != null && !server2Data.has("error")) {
-            if ("postpaid".equals(type) && server2Data.has("balanceInfo")) {
-                try {
-                    JSONObject balanceInfo = server2Data.getJSONObject("balanceInfo");
-                    if (balanceInfo.has("Result") && balanceInfo.getJSONArray("Result").length() > 0) {
-                        JSONObject balanceResult = balanceInfo.getJSONArray("Result").getJSONObject(0);
-                        String mobileNo = balanceResult.optString("MOBILE_NO", "");
-                        if (!mobileNo.isEmpty() && !mobileNo.equals("null")) {
-                            customerInfo.put("mobile_no", mobileNo);
-                        }
-                    }
-                } catch (Exception e) {
-                    System.out.println("❌ Error extracting mobile from SERVER2: " + e.getMessage());
-                }
-            }
-        }
-
-        // Clean empty fields
-        for (Map.Entry<String, String> entry : customerInfo.entrySet()) {
-            String value = entry.getValue();
-            if (value == null || value.equals("null") || value.isEmpty()) {
-                customerInfo.put(entry.getKey(), "");
-            }
+        // clean nulls
+        for (String key : Arrays.asList("customer_name","father_name","address","mobile_no","meter_no","consumer_no")) {
+            customerInfo.putIfAbsent(key, "");
+            if (customerInfo.get(key) == null) customerInfo.put(key, "");
         }
 
         result.putAll(customerInfo);
     }
 
-    // Extract consumer number from SERVER1
+    // SERVER1 consumer number extractor
     private String extractConsumerNumberFromSERVER1(String responseBody) {
         try {
-            String jsonPart = extractActualJson(responseBody);
-            JSONObject SERVER1Data = new JSONObject(jsonPart);
+            String json = extractActualJson(responseBody);
+            JSONObject data = new JSONObject(json);
 
-            if (SERVER1Data.has("mCustomerData")) {
-                JSONObject mCustomerData = SERVER1Data.getJSONObject("mCustomerData");
-                if (mCustomerData.has("result")) {
-                    JSONObject result = mCustomerData.getJSONObject("result");
-                    return extractDirectValue(result, "customerAccountNo");
-                }
+            if (data.has("mCustomerData")) {
+                JSONObject res = data.getJSONObject("mCustomerData").getJSONObject("result");
+                return extractDirectValue(res, "customerAccountNo");
             }
-        } catch (Exception e) {
-            System.out.println("❌ Error extracting consumer number from SERVER1: " + e.getMessage());
-        }
+        } catch (Exception ignored) {}
         return "";
     }
 
-    // Extract customer info from SERVER1 response
-    private void extractCustomerInfoFromSERVER1(String responseBody, Map<String, String> customerInfo) {
+    // SERVER1 customer details extractor
+    private void extractCustomerInfoFromSERVER1(String responseBody, Map<String, String> info) {
         try {
-            String jsonPart = extractActualJson(responseBody);
-            JSONObject SERVER1Data = new JSONObject(jsonPart);
+            String json = extractActualJson(responseBody);
+            JSONObject data = new JSONObject(json);
 
-            if (SERVER1Data.has("mCustomerData")) {
-                JSONObject mCustomerData = SERVER1Data.getJSONObject("mCustomerData");
-                if (mCustomerData.has("result")) {
-                    JSONObject result = mCustomerData.getJSONObject("result");
+            if (data.has("mCustomerData")) {
+                JSONObject res = data.getJSONObject("mCustomerData").getJSONObject("result");
 
-                    // Map SERVER1 fields to form fields
-                    customerInfo.put("customer_name", extractDirectValue(result, "customerName"));
-                    customerInfo.put("address", extractDirectValue(result, "customerAddress"));
-                    customerInfo.put("mobile_no", extractDirectValue(result, "customerPhone"));
-                    customerInfo.put("consumer_no", extractDirectValue(result, "customerAccountNo"));
-                    customerInfo.put("meter_no", extractDirectValue(result, "meterNumber"));
-                    
-                    System.out.println("✅ Extracted customer info from SERVER1");
-                }
+                info.put("customer_name", extractDirectValue(res, "customerName"));
+                info.put("address", extractDirectValue(res, "customerAddress"));
+                info.put("mobile_no", extractDirectValue(res, "customerPhone"));
+                info.put("consumer_no", extractDirectValue(res, "customerAccountNo"));
+                info.put("meter_no", extractDirectValue(res, "meterNumber"));
             }
-        } catch (Exception e) {
-            System.out.println("❌ Error in extractCustomerInfoFromSERVER1: " + e.getMessage());
-        }
+        } catch (Exception ignored) {}
     }
 
-    // Helper method to extract direct values
-    private String extractDirectValue(JSONObject jsonObject, String key) {
+    private String extractDirectValue(JSONObject json, String key) {
         try {
-            if (!jsonObject.has(key)) {
-                return "";
+            if (!json.has(key)) return "";
+            Object obj = json.get(key);
+
+            if (obj instanceof JSONObject && ((JSONObject)obj).has("_text")) {
+                return ((JSONObject)obj).getString("_text").trim();
             }
-
-            Object value = jsonObject.get(key);
-
-            // Handle JSONObject with _text
-            if (value instanceof JSONObject) {
-                JSONObject obj = (JSONObject) value;
-                if (obj.has("_text")) {
-                    String textValue = obj.getString("_text");
-                    return (textValue == null || textValue.isEmpty() || textValue.equals("{}")) ? "" : textValue.trim();
-                }
-                return "";
-            }
-
-            // Handle primitive types directly
-            String stringValue = value.toString().trim();
-            return (stringValue.isEmpty() || stringValue.equals("{}")) ? "" : stringValue;
-
+            return obj.toString().trim();
         } catch (Exception e) {
             return "";
         }
     }
 
-    // Extract the actual JSON from the JSON-RPC response
-    private String extractActualJson(String responseBody) {
+    private String extractActualJson(String s) {
         try {
-            int jsonStart = responseBody.indexOf("1:{");
-            if (jsonStart != -1) {
-                return responseBody.substring(jsonStart + 2);
-            }
-            return responseBody;
+            int i = s.indexOf("1:{");
+            if (i != -1) return s.substring(i + 2);
+            return s;
         } catch (Exception e) {
-            return responseBody;
+            return s;
         }
     }
 
-    private String extractMobileFromSERVER1(String responseBody) {
+    // ---------------- BALANCE -------------------
+    private void extractBalanceInfo(JSONObject s3, JSONObject s2, Map<String, Object> result) {
+        String arrear = "";
+
         try {
-            int phoneIndex = responseBody.indexOf("\"customerPhone\":{\"_text\":\"");
-            if (phoneIndex != -1) {
-                int valueStart = phoneIndex + "\"customerPhone\":{\"_text\":\"".length();
-                int valueEnd = responseBody.indexOf("\"", valueStart);
-                if (valueEnd != -1) {
-                    String mobileNo = responseBody.substring(valueStart, valueEnd);
-                    if (!mobileNo.isEmpty() && !mobileNo.equals("null")) {
-                        return mobileNo;
-                    }
+            if (s2 != null && s2.has("finalBalanceInfo")) {
+                String val = s2.optString("finalBalanceInfo");
+                if (isValidValue(val)) arrear = extractAmountFromBalance(val);
+            }
+
+            if (arrear.isEmpty() && s2 != null && s2.has("balanceInfo")) {
+                JSONObject bi = s2.getJSONObject("balanceInfo");
+                if (bi.has("Result") && bi.getJSONArray("Result").length() > 0) {
+                    double bal = bi.getJSONArray("Result").getJSONObject(0).optDouble("BALANCE", 0);
+                    if (bal > 0) arrear = String.format("%.0f", bal);
                 }
             }
+
+            if (arrear.isEmpty() && s3.has("arrearAmount")) {
+                String a = s3.optString("arrearAmount");
+                if (isValidValue(a) && !a.equals("0")) arrear = a;
+            }
+        } catch (Exception ignored) {}
+
+        if (arrear.equals("0") || arrear.equals("0.00")) arrear = "";
+        result.put("arrear", arrear);
+    }
+
+    private boolean isValidValue(String v) {
+        return v != null && !v.trim().isEmpty() &&
+               !v.equals("0") && !v.equals("0.00") &&
+               !v.equals("null") && !v.equals("N/A");
+    }
+
+    private String extractAmountFromBalance(String s) {
+        try {
+            if (!s.contains(",") && !s.contains(":")) return s.trim();
+            return s.split(",")[0].trim();
         } catch (Exception e) {
-            System.out.println("❌ Error extracting mobile from SERVER1: " + e.getMessage());
+            return s;
         }
-        return "";
     }
 
-    private void extractBalanceInfo(JSONObject server3Data, JSONObject server2Data, Map<String, Object> result) {
-        String arrearAmount = "";
-
-        if (server2Data != null && server2Data.has("finalBalanceInfo")) {
-            String balanceString = server2Data.optString("finalBalanceInfo");
-            if (isValidValue(balanceString)) {
-                arrearAmount = extractAmountFromBalance(balanceString);
-            }
-        }
-
-        if (arrearAmount.isEmpty() && server2Data != null && server2Data.has("balanceInfo")) {
-            try {
-                JSONObject balanceInfo = server2Data.getJSONObject("balanceInfo");
-                if (balanceInfo.has("Result") && balanceInfo.getJSONArray("Result").length() > 0) {
-                    JSONObject balanceResult = balanceInfo.getJSONArray("Result").getJSONObject(0);
-                    double totalBalance = balanceResult.optDouble("BALANCE", 0);
-                    if (totalBalance > 0) {
-                        arrearAmount = String.format("%.0f", totalBalance);
-                    }
-                }
-            } catch (Exception e) {
-                System.out.println("❌ Error parsing balanceInfo: " + e.getMessage());
-            }
-        }
-
-        if (arrearAmount.isEmpty() && server3Data != null && server3Data.has("arrearAmount")) {
-            String server3Arrear = server3Data.optString("arrearAmount");
-            if (isValidValue(server3Arrear) && !server3Arrear.equals("0") && !server3Arrear.equals("0.00")) {
-                arrearAmount = server3Arrear;
-            }
-        }
-
-        if (arrearAmount.equals("0") || arrearAmount.equals("0.00") || arrearAmount.isEmpty()) {
-            arrearAmount = "";
-        }
-
-        result.put("arrear", arrearAmount);
-    }
-
+    // ---------------- RECHARGE HISTORY -------------------
     private void extractRechargeHistory(Map<String, Object> server1Result, Map<String, Object> result) {
-        List<Map<String, String>> recharges = new ArrayList<>();
+        List<Map<String, String>> list = new ArrayList<>();
 
         try {
-            Object server1DataObj = server1Result.get("SERVER1_data");
-            if (server1DataObj instanceof String) {
-                String responseBody = (String) server1DataObj;
-                recharges = extractRechargeTransactions(responseBody);
-            }
-        } catch (Exception e) {
-            System.out.println("❌ Error extracting recharge history: " + e.getMessage());
-        }
+            Object s1 = server1Result.get("SERVER1_data");
+            if (s1 instanceof String) list = extractRechargeTransactions((String) s1);
+        } catch (Exception ignored) {}
 
-        int maxRecharges = Math.min(recharges.size(), 4);
-        result.put("recharges", recharges.subList(0, maxRecharges));
+        result.put("recharges", list.subList(0, Math.min(list.size(), 4)));
     }
 
-    private List<Map<String, String>> extractRechargeTransactions(String responseBody) {
-        List<Map<String, String>> transactions = new ArrayList<>();
+    private List<Map<String, String>> extractRechargeTransactions(String s) {
+        List<Map<String, String>> out = new ArrayList<>();
+        int idx = 0, count = 0;
 
         try {
-            int index = 0;
-            int count = 0;
+            while ((idx = s.indexOf("\"tokens\":{\"_text\":\"", idx)) != -1 && count < 10) {
 
-            while (index != -1 && count < 10) {
-                index = responseBody.indexOf("\"tokens\":{\"_text\":\"", index);
-                if (index == -1) break;
+                int start = Math.max(0, idx - 800);
+                int end = Math.min(s.length(), idx + 300);
+                String area = s.substring(start, end);
 
-                int tokenStart = index + "\"tokens\":{\"_text\":\"".length();
-                int tokenEnd = responseBody.indexOf("\"", tokenStart);
+                Map<String,String> tr = new HashMap<>();
+                tr.put("Date", extractExactValue(area, "date"));
+                tr.put("Amount", "৳" + extractExactValue(area, "grossAmount"));
 
-                if (tokenEnd != -1) {
-                    Map<String, String> transaction = extractTransactionFields(responseBody, index);
-                    transactions.add(transaction);
-                    count++;
-                }
+                out.add(tr);
+                count++;
 
-                index = tokenEnd + 1;
+                idx++;
             }
+        } catch (Exception ignored) {}
 
-        } catch (Exception e) {
-            System.out.println("❌ Error extracting recharge transactions: " + e.getMessage());
-        }
-
-        return transactions;
+        return out;
     }
 
-    private Map<String, String> extractTransactionFields(String response, int tokenPosition) {
-        Map<String, String> transaction = new HashMap<>();
-
+    private String extractExactValue(String body, String field) {
         try {
-            int searchStart = Math.max(0, tokenPosition - 1000);
-            int searchEnd = Math.min(response.length(), tokenPosition + 200);
-            String searchArea = response.substring(searchStart, searchEnd);
-
-            String date = extractExactValue(searchArea, "date");
-            String amount = extractExactValue(searchArea, "grossAmount");
-
-            transaction.put("Date", formatDateForDisplay(date));
-            transaction.put("Amount", formatAmountForDisplay(amount));
-
-        } catch (Exception e) {
-            System.out.println("❌ Error extracting transaction fields: " + e.getMessage());
-        }
-
-        return transaction;
-    }
-
-    private String formatDateForDisplay(String date) {
-        if (date == null || date.equals("N/A") || date.isEmpty()) {
-            return "";
-        }
-        return date.replace("T", " ").split(" ")[0];
-    }
-
-    private String formatAmountForDisplay(String amount) {
-        if (amount == null || amount.equals("N/A") || amount.isEmpty()) {
-            return "";
-        }
-        return "৳" + amount;
-    }
-
-    private String extractAmountFromBalance(String balanceString) {
-        if (balanceString == null || balanceString.isEmpty() || balanceString.equals("null")) {
-            return "";
-        }
-
-        try {
-            if (!balanceString.contains(",") && !balanceString.contains(":")) {
-                return balanceString.trim();
+            String p = "\"" + field + "\":{\"_text\":\"";
+            int i = body.indexOf(p);
+            if (i != -1) {
+                int st = i + p.length();
+                int en = body.indexOf("\"", st);
+                return en > st ? body.substring(st, en) : "";
             }
-
-            String[] parts = balanceString.split(",");
-            if (parts.length > 0) {
-                return parts[0].trim();
-            }
-        } catch (Exception e) {
-            // Ignore parsing errors
-        }
-
-        return balanceString;
-    }
-
-    private String extractExactValue(String text, String fieldName) {
-        try {
-            String pattern = "\"" + fieldName + "\":{\"_text\":\"";
-            int start = text.indexOf(pattern);
-            if (start != -1) {
-                int valueStart = start + pattern.length();
-                int valueEnd = text.indexOf("\"", valueStart);
-                if (valueEnd != -1) {
-                    return text.substring(valueStart, valueEnd);
-                }
-            }
-        } catch (Exception e) {
-            // Ignore
-        }
+        } catch (Exception ignored) {}
         return "";
     }
-
+}
     private boolean isValidValue(String value) {
         if (value == null) return false;
 
