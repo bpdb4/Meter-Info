@@ -249,33 +249,7 @@ public class ApplicationFormHelper {
     }
 
     // ---------------- BALANCE -------------------
-    private void extractBalanceInfo(JSONObject s3, JSONArray s2Array, Map<String, Object> result) {
-        String arrear = "";
-
-        try {
-            // SERVER2 balance fallback
-            if (s2Array != null) {
-                JSONObject s2Wrapper = null;
-                if (s2Array.length() > 0) s2Wrapper = s2Array.optJSONObject(0);
-
-                if (s2Wrapper != null && s2Wrapper.has("BALANCE")) {
-                    double bal = s2Wrapper.optDouble("BALANCE", 0);
-                    if (bal > 0) arrear = String.format("%.0f", bal);
-                }
-            }
-
-            // SERVER3 balance
-            if (arrear.isEmpty() && s3 != null && s3.has("arrearAmount")) {
-                String a = s3.optString("arrearAmount");
-                if (isValidValue(a) && !a.equals("0")) arrear = a;
-            }
-
-        } catch (Exception ignored) {}
-
-        if (arrear.equals("0") || arrear.equals("0.00")) arrear = "";
-        result.put("arrear", arrear);
-    }
-
+    private void extractBalanceInfo(JSONObject s3, JSONObject s2, Map<String, Object> result) {       String arrear = "";        try {           if (s2 != null && s2.has("finalBalanceInfo")) {               String val = s2.optString("finalBalanceInfo");               if (isValidValue(val)) arrear = extractAmountFromBalance(val);           }            if (arrear.isEmpty() && s2 != null && s2.has("balanceInfo")) {               JSONObject bi = s2.getJSONObject("balanceInfo");               if (bi.has("Result") && bi.getJSONArray("Result").length() > 0) {                   double bal = bi.getJSONArray("Result").getJSONObject(0).optDouble("BALANCE", 0);                   if (bal > 0) arrear = String.format("%.0f", bal);               }           }            if (arrear.isEmpty() && s3.has("arrearAmount")) {               String a = s3.optString("arrearAmount");               if (isValidValue(a) && !a.equals("0")) arrear = a;           }       } catch (Exception ignored) {}        if (arrear.equals("0") || arrear.equals("0.00")) arrear = "";       result.put("arrear", arrear);   }
     private boolean isValidValue(String v) {
         return v != null && !v.trim().isEmpty() &&
                !v.equals("0") && !v.equals("0.00") &&
