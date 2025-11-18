@@ -182,19 +182,21 @@ public class MainActivity extends AppCompatActivity {
             fetchData(inputNumber);
         });
         // ADD EXCEL BUTTON LISTENER HERE
-       // excelBtn.setOnClickListener(v -> {
-            //if //(isStoragePermissionGranted()) {
-                saveAndShareExcel();
-           // } else {
-                //Toast.makeText(this, //"Please grant storage permission first", Toast.LENGTH_LONG).show();
-                //checkStoragePermission();
-            }
-         // ✅ CORRECT PLACE: Add back button listener HERE
-    findViewById(R.id.backBtn).setOnClickListener(v -> {
-        Intent intent = new Intent(MainActivity.this, Home.class);
-        startActivity(intent);
-        finish();
-    });
+// excelBtn.setOnClickListener(v -> {
+//     if (isStoragePermissionGranted()) {
+//         saveAndShareExcel();
+//     } else {
+//         Toast.makeText(this, "Please grant storage permission first", Toast.LENGTH_LONG).show();
+//         checkStoragePermission();
+//     }
+// });
+
+// ✅ CORRECT PLACE: Add back button listener HERE
+findViewById(R.id.backBtn).setOnClickListener(v -> {
+    Intent intent = new Intent(MainActivity.this, Home.class);
+    startActivity(intent);
+    finish();
+});
 }
         
 
