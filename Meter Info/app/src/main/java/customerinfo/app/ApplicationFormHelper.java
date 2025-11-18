@@ -9,9 +9,7 @@ public class ApplicationFormHelper {
 
     private String currentType;
 
-    public ApplicationFormHelper() {
-        // Empty constructor
-    }
+    public ApplicationFormHelper() {}
 
     public Map<String, Object> fetchDataForApplicationForm(String inputNumber, String type) {
         Map<String, Object> result = new HashMap<>();
@@ -70,8 +68,19 @@ public class ApplicationFormHelper {
         try {
             Map<String, Object> server3Result = MainActivity.SERVER3Lookup(customerNumber);
 
-            if (server3Result.containsKey("error")) {
-                result.put("error", "গ্রাহক তথ্য পাওয়া যায়নি: " + server3Result.get("error"));
+            boolean server3Ok = !(server3Result.containsKey("error") ||
+                                  server3Result.get("SERVER3_data") == null ||
+                                  ((JSONObject) server3Result.get("SERVER3_data")).length() == 0);
+
+            // SERVER3 FAILED → USE SERVER2
+            if (!server3Ok) {
+                System.out.println("⚠ SERVER3 returned null → using SERVER2 fallback");
+
+                Map<String, Object> server2Only = new HashMap<>();
+                server2Only.put("SERVER3_data", null);
+                server2Only.put("SERVER2_data", server3Result.get("SERVER2_data"));
+
+                extractFormData(server2Only, null, result, customerNumber, "postpaid");
                 return result;
             }
 
@@ -84,7 +93,7 @@ public class ApplicationFormHelper {
         return result;
     }
 
-    // MASTER FORM EXTRACTOR (common)
+    // MASTER FORM EXTRACTOR
     private void extractFormData(Map<String, Object> server3Result,
                                 Map<String, Object> server1Result,
                                 Map<String, Object> result,
@@ -92,11 +101,17 @@ public class ApplicationFormHelper {
                                 String type) {
         try {
             JSONObject server3Data = (JSONObject) server3Result.get("SERVER3_data");
-            Object server2Obj = server3Result.get("SERVER2_data");
-            JSONObject server2Data = server2Obj instanceof JSONObject ? (JSONObject) server2Obj : null;
 
-            extractCustomerInfo(server3Data, server2Data, server1Result, result, inputNumber, type);
-            extractBalanceInfo(server3Data, server2Data, result);
+            Object server2Obj = server3Result.get("SERVER2_data");
+            JSONArray server2Array = null;
+
+            // Parse nested ARRAY structure of SERVER2
+            if (server2Obj instanceof JSONArray) {
+                server2Array = ((JSONArray) server2Obj).optJSONArray(0);
+            }
+
+            extractCustomerInfo(server3Data, server2Array, server1Result, result, inputNumber, type);
+            extractBalanceInfo(server3Data, server2Array, result);
 
             if ("prepaid".equals(type) && server1Result != null) {
                 extractRechargeHistory(server1Result, result);
@@ -111,7 +126,7 @@ public class ApplicationFormHelper {
     }
 
     // ---------------- CUSTOMER INFO -------------------
-    private void extractCustomerInfo(JSONObject server3Data, JSONObject server2Data,
+    private void extractCustomerInfo(JSONObject server3Data, JSONArray server2Array,
                                      Map<String, Object> server1Result,
                                      Map<String, Object> result,
                                      String inputNumber, String type) {
@@ -125,10 +140,8 @@ public class ApplicationFormHelper {
                 if (s1obj instanceof String) {
                     String body = (String) s1obj;
 
-                    // extract full fields
                     extractCustomerInfoFromSERVER1(body, customerInfo);
 
-                    // consumer number from SERVER1
                     String consumerNumber = extractConsumerNumberFromSERVER1(body);
                     if (!consumerNumber.isEmpty()) {
                         customerInfo.put("consumer_no", consumerNumber);
@@ -137,33 +150,40 @@ public class ApplicationFormHelper {
             } catch (Exception ignored) {}
         }
 
-        // ---------- POSTPAID (simple version as requested) ----------
-        if ("postpaid".equals(type) && server3Data != null) {
+        // ---------- POSTPAID ----------
+        if ("postpaid".equals(type)) {
 
-            customerInfo.put("customer_name", server3Data.optString("customerName", ""));
-            customerInfo.put("father_name", server3Data.optString("fatherName", ""));
-            customerInfo.put("address", server3Data.optString("customerAddr", ""));
+            boolean s3Available = server3Data != null && server3Data.length() > 0;
 
-            // No mobile number for postpaid
-            customerInfo.put("mobile_no", "");
+            if (s3Available) {
+                customerInfo.put("customer_name", server3Data.optString("customerName", ""));
+                customerInfo.put("father_name", server3Data.optString("fatherName", ""));
+                customerInfo.put("address", server3Data.optString("customerAddr", ""));
+                customerInfo.put("mobile_no", "");
+                customerInfo.put("meter_no", server3Data.optString("meterNum", inputNumber));
+                customerInfo.put("consumer_no", inputNumber);
 
-            // meter number (fallback to input)
-            String meter = server3Data.optString("meterNum", "");
-            if (meter == null || meter.isEmpty() || meter.equals("null")) {
-                meter = inputNumber;
+            } else if (server2Array != null && server2Array.length() > 0) {
+
+                // SERVER2 fallback
+                JSONObject s2 = server2Array.optJSONObject(0);
+
+                customerInfo.put("customer_name", s2.optString("CUSTOMER_NAME", ""));
+                customerInfo.put("father_name", "");
+                customerInfo.put("address", s2.optString("ADDRESS", ""));
+
+                customerInfo.put("mobile_no", "");
+                customerInfo.put("meter_no", s2.optString("METER_NUM", inputNumber));
+                customerInfo.put("consumer_no", s2.optString("CUSTOMER_NUMBER", inputNumber));
             }
-            customerInfo.put("meter_no", meter);
-
-            // always the input number
-            customerInfo.put("consumer_no", inputNumber);
         }
 
-        // PREPAID meter number override
+        // PREPAID override
         if ("prepaid".equals(type)) {
             customerInfo.put("meter_no", inputNumber);
         }
 
-        // clean nulls
+        // Clean nulls
         for (String key : Arrays.asList("customer_name","father_name","address","mobile_no","meter_no","consumer_no")) {
             customerInfo.putIfAbsent(key, "");
             if (customerInfo.get(key) == null) customerInfo.put(key, "");
@@ -229,27 +249,27 @@ public class ApplicationFormHelper {
     }
 
     // ---------------- BALANCE -------------------
-    private void extractBalanceInfo(JSONObject s3, JSONObject s2, Map<String, Object> result) {
+    private void extractBalanceInfo(JSONObject s3, JSONArray s2Array, Map<String, Object> result) {
         String arrear = "";
 
         try {
-            if (s2 != null && s2.has("finalBalanceInfo")) {
-                String val = s2.optString("finalBalanceInfo");
-                if (isValidValue(val)) arrear = extractAmountFromBalance(val);
-            }
+            // SERVER2 balance fallback
+            if (s2Array != null) {
+                JSONObject s2Wrapper = null;
+                if (s2Array.length() > 0) s2Wrapper = s2Array.optJSONObject(0);
 
-            if (arrear.isEmpty() && s2 != null && s2.has("balanceInfo")) {
-                JSONObject bi = s2.getJSONObject("balanceInfo");
-                if (bi.has("Result") && bi.getJSONArray("Result").length() > 0) {
-                    double bal = bi.getJSONArray("Result").getJSONObject(0).optDouble("BALANCE", 0);
+                if (s2Wrapper != null && s2Wrapper.has("BALANCE")) {
+                    double bal = s2Wrapper.optDouble("BALANCE", 0);
                     if (bal > 0) arrear = String.format("%.0f", bal);
                 }
             }
 
-            if (arrear.isEmpty() && s3.has("arrearAmount")) {
+            // SERVER3 balance
+            if (arrear.isEmpty() && s3 != null && s3.has("arrearAmount")) {
                 String a = s3.optString("arrearAmount");
                 if (isValidValue(a) && !a.equals("0")) arrear = a;
             }
+
         } catch (Exception ignored) {}
 
         if (arrear.equals("0") || arrear.equals("0.00")) arrear = "";
@@ -321,4 +341,3 @@ public class ApplicationFormHelper {
         return "";
     }
 }
-  
