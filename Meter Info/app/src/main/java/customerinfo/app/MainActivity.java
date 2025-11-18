@@ -94,13 +94,19 @@ public class MainActivity extends AppCompatActivity {
         // Check storage permission FIRST
         checkStoragePermission();
 
-        // Initialize views FIRST
+        // Initialize views
         initViews();
 
         // THEN setup click listeners
         setupClickListeners();
-        // Show Excel save status in result
-        showResult("🔍 Enter meter/consumer number and search\n💾 Data auto-saves to Excel after each search");
+        
+        // Initialize ExcelHelper only if permission already granted
+        if (isStoragePermissionGranted()) {
+            excelHelper = new ExcelHelper(this);
+            showResult("✅ Excel ready - Enter meter number to search");
+        } else {
+            showResult("🔍 Enter meter/consumer number and search\n💾 Excel will be ready after permission");
+        }
     }
 
     private void initViews() {
@@ -126,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialize UI Helper
         uiHelper = new UIHelper(this, resultView, findViewById(R.id.tableContainer));
-        excelHelper = new ExcelHelper(this);
+        // excelHelper = new ExcelHelper(this); // REMOVED - will be created after permission
 
         updateButtonStates();
         updatePostpaidSubOptions();
@@ -181,23 +187,32 @@ public class MainActivity extends AppCompatActivity {
 
             fetchData(inputNumber);
         });
-        // ADD EXCEL BUTTON LISTENER HERE
-// excelBtn.setOnClickListener(v -> {
-//     if (isStoragePermissionGranted()) {
-//         saveAndShareExcel();
-//     } else {
-//         Toast.makeText(this, "Please grant storage permission first", Toast.LENGTH_LONG).show();
-//         checkStoragePermission();
-//     }
-// });
 
-// ✅ CORRECT PLACE: Add back button listener HERE
-findViewById(R.id.backBtn).setOnClickListener(v -> {
-    Intent intent = new Intent(MainActivity.this, Home.class);
-    startActivity(intent);
-    finish();
-});
-}
+        // ✅ CORRECT PLACE: Add back button listener HERE
+        findViewById(R.id.backBtn).setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, Home.class);
+            startActivity(intent);
+            finish();
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == STORAGE_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Storage permission granted", Toast.LENGTH_SHORT).show();
+                // Initialize ExcelHelper AFTER permission is granted
+                if (excelHelper == null) {
+                    excelHelper = new ExcelHelper(this);
+                }
+                showResult("✅ Excel ready - Enter meter number to search");
+            } else {
+                Toast.makeText(this, "Storage permission denied - Excel saving disabled", Toast.LENGTH_LONG).show();
+                showResult("❌ Storage permission denied - Excel saving disabled");
+            }
+        }
+    }
         
 
 
@@ -2106,53 +2121,37 @@ findViewById(R.id.backBtn).setOnClickListener(v -> {
     }
 
 
-    private void checkStoragePermission() {
-    if (isStoragePermissionGranted()) {
-        // Permission already granted, do nothing
-        return;
-    }
-    
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-        // Android 11+ - Only request if not already granted
-        if (!Environment.isExternalStorageManager()) {
-            try {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                Uri uri = Uri.fromParts("package", getPackageName(), null);
-                intent.setData(uri);
-                startActivity(intent);
-            } catch (Exception e) {
-                Intent intent = new Intent();
-                intent.setAction(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                startActivity(intent);
+  private void checkStoragePermission() {
+        if (isStoragePermissionGranted()) {
+            return;
+        }
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                try {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                    Uri uri = Uri.fromParts("package", getPackageName(), null);
+                    intent.setData(uri);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Intent intent = new Intent();
+                    intent.setAction(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                    startActivity(intent);
+                }
             }
-        }
-    } else {
-        // Android 10 and below
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            Manifest.permission.READ_EXTERNAL_STORAGE
-                    },
-                    STORAGE_PERMISSION_CODE);
-        }
-    }
-}
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == STORAGE_PERMISSION_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Storage permission granted", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Storage permission denied - Excel saving disabled", Toast.LENGTH_LONG).show();
+        } else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                Manifest.permission.READ_EXTERNAL_STORAGE
+                        },
+                        STORAGE_PERMISSION_CODE);
             }
         }
     }
 
-    // Add this method to check if permission is actually granted
     private boolean isStoragePermissionGranted() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             return Environment.isExternalStorageManager();
@@ -2161,17 +2160,15 @@ findViewById(R.id.backBtn).setOnClickListener(v -> {
                     == PackageManager.PERMISSION_GRANTED;
         }
     }
-    // Excel data extraction method - ADD THIS METHOD
+
     private Map<String, String> extractDataForExcel(Map<String, Object> result, String type) {
         java.util.Map<String, String> excelData = new java.util.HashMap<>();
 
         try {
             if ("prepaid".equals(type)) {
-                // Extract prepaid specific data
                 excelData.put("Meter Number", getSafeString(result.get("meter_number")));
                 excelData.put("Consumer Number", getSafeString(result.get("consumer_number")));
 
-                // Extract from merged data
                 Map<String, Object> mergedData = mergeSERVERData(result);
                 if (mergedData != null) {
                     Map<String, String> customerInfo = (Map<String, String>) mergedData.get("customer_info");
@@ -2187,7 +2184,6 @@ findViewById(R.id.backBtn).setOnClickListener(v -> {
                 }
 
             } else {
-                // Extract postpaid data
                 excelData.put("Customer Number", getSafeString(result.get("customer_number")));
 
                 Map<String, Object> mergedData = mergeSERVERData(result);
@@ -2210,7 +2206,6 @@ findViewById(R.id.backBtn).setOnClickListener(v -> {
         return excelData;
     }
 
-    // Helper method for safe string - ADD THIS METHOD
     private String getSafeString(Object value) {
         if (value == null) return "N/A";
         String stringValue = value.toString();
@@ -2218,10 +2213,17 @@ findViewById(R.id.backBtn).setOnClickListener(v -> {
     }
 
     private void saveLookupToExcel(Map<String, Object> result, String inputNumber) {
+        // Check if ExcelHelper is initialized
         if (excelHelper == null) {
-            excelHelper = new ExcelHelper(this);
+            if (isStoragePermissionGranted()) {
+                excelHelper = new ExcelHelper(this);
+            } else {
+                Log.e(TAG, "Cannot save - no storage permission");
+                showResult("❌ Cannot save - storage permission required");
+                return;
+            }
         }
-
+        
         try {
             if (selectedType.equals("prepaid")) {
                 Map<String, String> excelData = extractDataForExcel(result, "prepaid");
@@ -2247,10 +2249,10 @@ findViewById(R.id.backBtn).setOnClickListener(v -> {
 
         } catch (Exception e) {
             Log.e(TAG, "Error auto-saving to Excel: " + e.getMessage());
+            showResult("❌ Error saving to Excel: " + e.getMessage());
         }
     }
 
-    // Save and share method - ADD THIS METHOD
     public void saveAndShareExcel() {
         if (excelHelper != null) {
             boolean success = excelHelper.saveExcelFile();
@@ -2263,11 +2265,10 @@ findViewById(R.id.backBtn).setOnClickListener(v -> {
         }
     }
 
-    // Share file method - ADD THIS METHOD
     private void shareExcelFile(String filePath) {
-        // You can implement file sharing here if needed
         Toast.makeText(this, "Excel file saved: " + filePath, Toast.LENGTH_LONG).show();
     }
+    
     @Override
     protected void onDestroy() {
         super.onDestroy();
